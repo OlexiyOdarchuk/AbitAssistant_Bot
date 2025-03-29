@@ -1,0 +1,10 @@
+[project]
+name = "competition-check-telegram-bot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "aiogram>=3.19.0",
+    "selenium>=4.30.0",
+]
