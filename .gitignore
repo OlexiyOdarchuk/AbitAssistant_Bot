@@ -9,3 +9,4 @@ wheels/
 # Virtual environments
 .venv
 config.py
+app/database/db.sqlite3
