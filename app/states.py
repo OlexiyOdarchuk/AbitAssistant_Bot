@@ -1,0 +1,8 @@
+from aiogram.fsm.state import State, StatesGroup
+
+class States(StatesGroup):
+    get_mailing = State()
+    init_mailing = State()
+    get_ball = State()
+    get_link = State()
+    
