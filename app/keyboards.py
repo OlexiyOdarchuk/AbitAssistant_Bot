@@ -29,9 +29,8 @@ user_main = ReplyKeyboardMarkup(
 support = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="❌ До головного меню"),
-            KeyboardButton(text="📤 Відправити"),
-        ]
+            KeyboardButton(text="❌ До головного меню"), KeyboardButton(text="📤 Відправити"),
+        ],
     ],
     resize_keyboard=True,
 )
@@ -42,14 +41,18 @@ return_back = ReplyKeyboardMarkup(
 
 about_us = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="💸Донат💸"), KeyboardButton(text="❌ До головного меню")]
+        [
+            KeyboardButton(text="💸Донат💸"), KeyboardButton(text="❌ До головного меню")
+        ],
     ],
     resize_keyboard=True,
 )
 
 mailing = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="Відправити розсилку📣"), KeyboardButton(text="❌ До головного меню")],
+        [
+            KeyboardButton(text="Відправити розсилку📣"), KeyboardButton(text="❌ До головного меню"),
+        ],
     ],
     resize_keyboard=True,
 )

@@ -106,7 +106,7 @@ async def mailing(message: Message, state: FSMContext):
 
 
 @router.message(st.get_mailing, F.text)
-async def get_text(message: Message, state: FSMContext):
+async def get_mailing_text(message: Message, state: FSMContext):
     await state.update_data(mailing_text=message.md_text)
     await message.answer("Текст прийнято, повідомлення виглядає ось так:")
     data = await state.get_data()
@@ -132,7 +132,10 @@ async def init(message: Message, state: FSMContext):
             sent_count += 1
             await asyncio.sleep(0.1)
         except Exception as e:
-            print(f"Помилка при відправці користувачу {user}: {e}")
+            await bot.send_message(
+                chat_id=ADMIN_ID,
+                text=f"Помилка при відправці користувачу tg://user?id={user}: {e}",
+            )
 
     elapsed_time = round(time.time() - start_time, 2)
 
@@ -141,3 +144,45 @@ async def init(message: Message, state: FSMContext):
         text=f"Розсилка завершена! \nВідправлено {sent_count} повідомлень за {elapsed_time} секунд.",
         reply_markup=kb.admin_main,
     )
+    await state.set_state(None)
+
+
+@router.message(F.text == "👤Зв'язок з адміністрацією👤")
+async def support(message: Message, state: FSMContext):
+    await message.answer(
+        "Наступне повідомлення буде відправлено адміністрації, формулюйте його уважно:",
+        reply_markup=kb.return_back,
+    )
+    await state.set_state(st.get_support)
+
+
+@router.message(st.get_support, F.text)
+async def get_support_text(message: Message, state: FSMContext):
+    await message.answer(
+        "Ваше повідомлення зареєстровано, дякую за відгук. \nВам дадуть відповідь найближчим часом."
+    )
+    await state.set_state(None)
+    await message.answer(
+        "Ви в головному меню.\nДля координації по боту скористайтеся кнопками нижче👇",
+        reply_markup=kb.user_main,
+    )
+    try:
+        await bot.send_message(
+            chat_id=ADMIN_ID,
+            text=f"Повідомлення від користувача {message.from_user.url}:\n\n{message.md_text}  \n\nБуло надіслано в З'вязок",
+        )
+
+    except Exception as e:
+        await bot.send_message(
+            chat_id=ADMIN_ID,
+            text=f"Помилка при відправці користувачу {message.from_user.url}: {e}",
+        )
+
+
+@router.message(F.text)
+async def forward(message: Message):
+    if message.from_user.id != ADMIN_ID:
+        await bot.send_message(
+            chat_id=ADMIN_ID,
+            text=f"Повідомлення від користувача {message.from_user.url}:\n\n{message.md_text} \n\nБуло надіслано випадково",
+        )
