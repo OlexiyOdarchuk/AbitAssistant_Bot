@@ -1,8 +1,7 @@
-import asyncio
-import time
+import asyncio 
 
 from aiogram import F, Router
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
@@ -12,6 +11,8 @@ from app.services.parser import parser
 from app.services.generate_link import generate_link
 import app.keyboards as kb
 from app.states import States as st
+import app.services.mailing as mail
+import app.services.support as sup
 
 router = Router()
 
@@ -41,20 +42,20 @@ P.s. Та має не 200 з усіх предметів НМТ..
             reply_markup=kb.user_main,
         )
 
-
 @router.message(F.text == "❌ До головного меню")
-async def return_back(message: Message):
+async def return_back(message: Message, state:FSMContext):
     if message.from_user.id == ADMIN_ID:
+        await state.set_state(None)
         await message.answer(
             "Ви в головному меню.\nДля координації по боту скористайтеся кнопками нижче👇",
             reply_markup=kb.admin_main,
         )
     else:
+        await state.set_state(None)
         await message.answer(
             "Ви в головному меню.\nДля координації по боту скористайтеся кнопками нижче👇",
             reply_markup=kb.user_main,
         )
-
 
 @router.message(F.text == "💸Донат💸")
 async def donate(message: Message):
@@ -90,99 +91,28 @@ async def about_us(message: Message):
 
 @router.message(F.text == "📣Розсилка!")
 async def mailing(message: Message, state: FSMContext):
-    if message.from_user.id == ADMIN_ID:
-        await message.answer(
-            "📣 Надішліть текст розсилки: 📣", reply_markup=kb.return_back
-        )
-        await state.set_state(st.get_mailing)
-    else:
-        await message.answer(
-            "У вас немає прав на використання цієї команди, ви повертаєтеся в головне меню."
-        )
-        await message.answer(
-            "Ви в головному меню.\nДля координації по боту скористайтеся кнопками нижче👇",
-            reply_markup=kb.user_main,
-        )
+    await mail.mailing(message, state)
 
 
 @router.message(st.get_mailing, F.text)
 async def get_mailing_text(message: Message, state: FSMContext):
-    await state.update_data(mailing_text=message.md_text)
-    await message.answer("Текст прийнято, повідомлення виглядає ось так:")
-    data = await state.get_data()
-    mailing_text = data.get("mailing_text", "Текст не знайдено!!!")
-    await message.answer(
-        f"📣Повідомлення з розсилки: \n\n{mailing_text}", reply_markup=kb.mailing
-    )
-    await state.set_state(st.init_mailing)
+    await mail.get_mailing_text(message, state)
 
 
 @router.message(st.init_mailing, F.text == "Відправити розсилку📣")
 async def init(message: Message, state: FSMContext):
-    data = await state.get_data()
-    mailing_text = data.get("mailing_text", "Текст не знайдено!!!")
-    users = await rq.get_users()
-    start_time = time.time()
-    sent_count = 0
-    for user in users:
-        try:
-            await bot.send_message(
-                chat_id=user, text=f"📣Повідомлення з розсилки: \n\n{mailing_text}"
-            )
-            sent_count += 1
-            await asyncio.sleep(0.1)
-        except Exception as e:
-            await bot.send_message(
-                chat_id=ADMIN_ID,
-                text=f"Помилка при відправці користувачу tg://user?id={user}: {e}",
-            )
-
-    elapsed_time = round(time.time() - start_time, 2)
-
-    await bot.send_message(
-        chat_id=ADMIN_ID,
-        text=f"Розсилка завершена! \nВідправлено {sent_count} повідомлень за {elapsed_time} секунд.",
-        reply_markup=kb.admin_main,
-    )
-    await state.set_state(None)
+    await mail.init(message, state)
 
 
 @router.message(F.text == "👤Зв'язок з адміністрацією👤")
 async def support(message: Message, state: FSMContext):
-    await message.answer(
-        "Наступне повідомлення буде відправлено адміністрації, формулюйте його уважно:",
-        reply_markup=kb.return_back,
-    )
-    await state.set_state(st.get_support)
+    await sup.support(message, state)
 
 
 @router.message(st.get_support, F.text)
 async def get_support_text(message: Message, state: FSMContext):
-    await message.answer(
-        "Ваше повідомлення зареєстровано, дякую за відгук. \nВам дадуть відповідь найближчим часом."
-    )
-    await state.set_state(None)
-    await message.answer(
-        "Ви в головному меню.\nДля координації по боту скористайтеся кнопками нижче👇",
-        reply_markup=kb.user_main,
-    )
-    try:
-        await bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"Повідомлення від користувача {message.from_user.url}:\n\n{message.md_text}  \n\nБуло надіслано в З'вязок",
-        )
-
-    except Exception as e:
-        await bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"Помилка при відправці користувачу {message.from_user.url}: {e}",
-        )
-
+    await sup.get_support_text(message, state)
 
 @router.message(F.text)
-async def forward(message: Message):
-    if message.from_user.id != ADMIN_ID:
-        await bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"Повідомлення від користувача {message.from_user.url}:\n\n{message.md_text} \n\nБуло надіслано випадково",
-        )
+async def forward(message: Message, state: FSMContext):
+    await sup.forward(message, state)   
