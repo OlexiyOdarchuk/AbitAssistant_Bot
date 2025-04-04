@@ -1,4 +1,4 @@
-import asyncio 
+import asyncio
 
 from aiogram import F, Router
 from aiogram.filters import CommandStart
@@ -7,15 +7,16 @@ from aiogram.fsm.context import FSMContext
 
 from config import ADMIN_ID, bot
 import app.database.requests as rq
-from app.services.parser import parser
+from app.services.filter import parse
 from app.services.generate_link import generate_link
 import app.keyboards as kb
 from app.states import States as st
 import app.services.mailing as mail
 import app.services.support as sup
+from collections import defaultdict
 
+user_bal = defaultdict(dict)
 router = Router()
-
 
 @router.message(CommandStart())
 async def start(message: Message):
@@ -42,8 +43,9 @@ P.s. Та має не 200 з усіх предметів НМТ..
             reply_markup=kb.user_main,
         )
 
+
 @router.message(F.text == "❌ До головного меню")
-async def return_back(message: Message, state:FSMContext):
+async def return_back(message: Message, state: FSMContext):
     if message.from_user.id == ADMIN_ID:
         await state.set_state(None)
         await message.answer(
@@ -56,6 +58,7 @@ async def return_back(message: Message, state:FSMContext):
             "Ви в головному меню.\nДля координації по боту скористайтеся кнопками нижче👇",
             reply_markup=kb.user_main,
         )
+
 
 @router.message(F.text == "💸Донат💸")
 async def donate(message: Message):
@@ -108,11 +111,29 @@ async def init(message: Message, state: FSMContext):
 async def support(message: Message, state: FSMContext):
     await sup.support(message, state)
 
-
 @router.message(st.get_support, F.text)
 async def get_support_text(message: Message, state: FSMContext):
     await sup.get_support_text(message, state)
 
+@router.message(F.text == "📝Почати відсіювання!📝")
+async def start_filter(message: Message, state: FSMContext):
+    await message.answer("Введіть свій середній рейтинговий бал на вибрану для фільтрації спеціальність:\n\
+Подивитися коефіцієнти можна на сайті https://www.education.ua/vstup/weighting-coefficients/", reply_markup=kb.return_back)
+    await state.set_state(st.get_bal)
+    
+@router.message(st.get_bal, F.text)
+async def get_bal(message: Message, state: FSMContext):
+    if int(message.text) >= 100 and int(message.text) <=200:
+        user_bal[message.from_user.id]['bal'] = message.text
+        await state.set_state(st.get_link)
+        await message.answer("Супер! Тепер відправте посилання на освітню програму з сайту vstup.osvita, наприклад:\n'https://vstup.osvita.ua/y2024/r27/41/1352329/'")
+    else:
+        await message.answer('Ваш бал повинен бути в межах від 100 до 200')
+
+@router.message(st.get_link, F.text)
+async def get_link(message: Message, state: FSMContext):
+    await parse(message, state)
+
 @router.message(F.text)
 async def forward(message: Message, state: FSMContext):
-    await sup.forward(message, state)   
+    await sup.forward(message, state)

@@ -5,6 +5,6 @@ class States(StatesGroup):
     init_mailing = State()
     get_support = State()
     init_support = State()
-    get_ball = State()
+    get_bal = State()
     get_link = State()
     

@@ -9,6 +9,7 @@ import app.database.requests as rq
 import app.keyboards as kb
 from app.states import States as st
 
+
 async def mailing(message: Message, state: FSMContext):
     if message.from_user.id == ADMIN_ID:
         await message.answer(
@@ -24,6 +25,7 @@ async def mailing(message: Message, state: FSMContext):
             reply_markup=kb.user_main,
         )
 
+
 async def get_mailing_text(message: Message, state: FSMContext):
     await state.update_data(mailing_text=message.md_text)
     await message.answer("Текст прийнято, повідомлення виглядає ось так:")
@@ -33,6 +35,7 @@ async def get_mailing_text(message: Message, state: FSMContext):
         f"📣Повідомлення з розсилки: \n\n{mailing_text}", reply_markup=kb.mailing
     )
     await state.set_state(st.init_mailing)
+
 
 async def init(message: Message, state: FSMContext):
     data = await state.get_data()
