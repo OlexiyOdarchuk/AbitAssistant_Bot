@@ -20,6 +20,9 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     tg_id = mapped_column(BigInteger)
 
+async def async_main():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 async def insert_into_user_table(user_id, id, name, priority, status, bal, type, link):
     table = rq.create_user_table(user_id) 
