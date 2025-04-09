@@ -2,13 +2,11 @@ import asyncio
 
 from aiogram import F, Router
 from aiogram.filters import CommandStart
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-from config import ADMIN_ID, bot
+from config import ADMIN_ID
 import app.database.requests as rq
-from app.services.filter import parse
-from app.services.generate_link import generate_link
 import app.keyboards as kb
 from app.states import States as st
 import app.services.mailing as mail
@@ -27,7 +25,7 @@ async def start(message: Message):
     else:
         await rq.set_user(message.from_user.id)
         await message.answer("""Вітаю в боті для перевірки конкурекції! 👋
-                                 
+
 Тут ми реалізували фільтрацію конкурентів для абітурієнтів(тобто майбуніх студентів😋),
 щоб ви не витрачали свій дорогоцінний час на однотипну роботу, яка, як правило, добре автоматизується!
 Ця програма буде корисна для тих,
@@ -35,14 +33,13 @@ async def start(message: Message):
 
 P.s. Та має не 200 з усіх предметів НМТ..
 Для вас взагалі конкуренції не існує🫣
-                                
+
                                 😉Успіхів!✊
                                 """)
         await message.answer(
             "Ви в головному меню.\nДля координації по боту скористайтеся кнопками нижче👇",
             reply_markup=kb.user_main,
         )
-
 
 @router.message(F.text == "❌ До головного меню")
 async def return_back(message: Message, state: FSMContext):
@@ -120,19 +117,18 @@ async def start_filter(message: Message, state: FSMContext):
     await message.answer("Введіть свій середній рейтинговий бал на вибрану для фільтрації спеціальність:\n\
 Подивитися коефіцієнти можна на сайті https://www.education.ua/vstup/weighting-coefficients/", reply_markup=kb.return_back)
     await state.set_state(st.get_bal)
-    
+
 @router.message(st.get_bal, F.text)
 async def get_bal(message: Message, state: FSMContext):
-    if int(message.text) >= 100 and int(message.text) <=200:
-        user_bal[message.from_user.id]['bal'] = message.text
-        await state.set_state(st.get_link)
-        await message.answer("Супер! Тепер відправте посилання на освітню програму з сайту vstup.osvita, наприклад:\n'https://vstup.osvita.ua/y2024/r27/41/1352329/'")
-    else:
-        await message.answer('Ваш бал повинен бути в межах від 100 до 200')
-
-@router.message(st.get_link, F.text)
-async def get_link(message: Message, state: FSMContext):
-    await parse(message, state)
+    try:
+        if int(message.text) >= 100 and int(message.text) <=200:
+            user_bal[message.from_user.id]['bal'] = message.text
+            await state.set_state(st.get_link)
+            await message.answer("Супер! Тепер відправте посилання на освітню програму з сайту vstup.osvita, наприклад:\n'https://vstup.osvita.ua/y2024/r27/41/1352329/'")
+        else:
+            await message.answer('Ваш бал повинен бути в межах від 100 до 200')
+    except ValueError:
+        await message.answer("Будь ласка, введіть число в межах від 100 до 200")
 
 @router.message(F.text)
 async def forward(message: Message, state: FSMContext):
