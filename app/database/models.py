@@ -39,6 +39,18 @@ class UserData(Base):
         Index('user_tg_id', 'status', 'coefficient', 'quota', 'score', 'competitor'),
     )
 
+    def as_dict(self):
+            return {
+                "id": self.id,
+                "tg_id": self.user_tg_id,
+                "name": self.name,
+                "status": self.status,
+                "coefficient": self.coefficient,
+                "quota": self.quota,
+                "score": self.score,
+                "competitor": self.competitor,
+            }
+
 async def async_main():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

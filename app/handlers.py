@@ -19,6 +19,7 @@ router = Router()
 @router.message(CommandStart())
 async def start(message: Message):
     if message.from_user.id == ADMIN_ID:
+        await rq.set_user(message.from_user.id)
         await message.answer(
             "О, ку!\nНа менюшку, може вона тобі треба)", reply_markup=kb.admin_main
         )
@@ -129,6 +130,22 @@ async def get_bal(message: Message, state: FSMContext):
             await message.answer('Ваш бал повинен бути в межах від 100 до 200')
     except ValueError:
         await message.answer("Будь ласка, введіть число в межах від 100 до 200")
+
+@router.message(st.get_link, F.text)
+async def get_link(message: Message, state: FSMContext):
+    try:
+        if message.text.startswith('https://vstup.osvita.ua'):
+            await state.set_state(None)
+            pass
+            #shoto = await rq.get_user_data(message.from_user.id)
+            # user_data = next((user for user in shoto if user.id == 2), None)
+            # await message.answer(f"Ім'я: {user_data.name}, Статус: {user_data.status}, Оцінка: {user_data.score}")
+            # await message.answer("Ваші дані успішно збережені")
+            # Це код, який викликає словник в якого значення id = 2 і дані з нього, такі як ім'я, статус та оцінка
+        else:
+            await message.answer("Посилання повинно починатися з 'https://vstup.osvita.ua' та бути коректним")
+    except ValueError:
+        await message.answer("Будь ласка, введіть посилання на освітню програму")
 
 @router.message(F.text)
 async def forward(message: Message, state: FSMContext):

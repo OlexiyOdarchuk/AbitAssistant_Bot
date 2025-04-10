@@ -5,7 +5,7 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
 )
-
+import app.database.requests as rq
 remove_keyboard = ReplyKeyboardRemove()
 
 admin_main = ReplyKeyboardMarkup(
@@ -56,3 +56,14 @@ mailing = ReplyKeyboardMarkup(
     ],
     resize_keyboard=True,
 )
+
+# async def generate_category_buttons(tg_id):
+#     data = rq.get_all_user_data(tg_id)
+#     abiturients = InlineKeyboardMarkup()
+
+#     for cat_id, cat_nam in data:
+#         abiturients.add(
+#             InlineKeyboardButton(text=cat_name, callback_data=f"category_{cat_id}")
+#         )
+
+#     return abiturients
