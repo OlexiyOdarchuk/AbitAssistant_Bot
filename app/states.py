@@ -7,4 +7,5 @@ class States(StatesGroup):
     init_support = State()
     get_bal = State()
     get_link = State()
-    
+    view_all = State()
+    view_competition = State()

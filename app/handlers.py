@@ -2,18 +2,20 @@ import asyncio
 
 from aiogram import F, Router
 from aiogram.filters import CommandStart
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from config import ADMIN_ID
 import app.database.requests as rq
 import app.keyboards as kb
-from app.states import States as st
+import app.services.filter as fltr
 import app.services.mailing as mail
 import app.services.support as sup
+import app.services.abits_len as abitlen
+from app.states import States as st
 from collections import defaultdict
 
-user_bal = defaultdict(dict)
+user_score = defaultdict(dict)
 router = Router()
 
 @router.message(CommandStart())
@@ -116,14 +118,15 @@ async def get_support_text(message: Message, state: FSMContext):
 @router.message(F.text == "📝Почати відсіювання!📝")
 async def start_filter(message: Message, state: FSMContext):
     await message.answer("Введіть свій середній рейтинговий бал на вибрану для фільтрації спеціальність:\n\
-Подивитися коефіцієнти можна на сайті https://www.education.ua/vstup/weighting-coefficients/", reply_markup=kb.return_back)
+        Подивитися коефіцієнти можна на сайті https://www.education.ua/vstup/weighting-coefficients/\
+\n\nА порахувати конкурсний бал на сайті: https://osvita.ua/consultations/konkurs-ball/", reply_markup=kb.return_back)
     await state.set_state(st.get_bal)
 
 @router.message(st.get_bal, F.text)
 async def get_bal(message: Message, state: FSMContext):
     try:
-        if int(message.text) >= 100 and int(message.text) <=200:
-            user_bal[message.from_user.id]['bal'] = message.text
+        if float(message.text) >= 100.000 and float(message.text) <=200.000:
+            user_score[message.from_user.id]['score'] = message.text
             await state.set_state(st.get_link)
             await message.answer("Супер! Тепер відправте посилання на освітню програму з сайту vstup.osvita, наприклад:\n'https://vstup.osvita.ua/y2024/r27/41/1352329/'")
         else:
@@ -135,17 +138,46 @@ async def get_bal(message: Message, state: FSMContext):
 async def get_link(message: Message, state: FSMContext):
     try:
         if message.text.startswith('https://vstup.osvita.ua'):
-            await state.set_state(None)
-            pass
-            #shoto = await rq.get_user_data(message.from_user.id)
-            # user_data = next((user for user in shoto if user.id == 2), None)
-            # await message.answer(f"Ім'я: {user_data.name}, Статус: {user_data.status}, Оцінка: {user_data.score}")
-            # await message.answer("Ваші дані успішно збережені")
-            # Це код, який викликає словник в якого значення id = 2 і дані з нього, такі як ім'я, статус та оцінка
+            # await fltr.filter_abits(message.from_user.id, user_score)
+            await message.answer("Сканування почалося. Це займе деякий час")
+            await asyncio.sleep(3)
+            await message.answer("Зачекайте ще декілька секунд...")
+            await asyncio.sleep(7)
+            await message.answer("Ще трохи...")
+            await asyncio.sleep(7)
+            await message.answer("Майже готово...")
+            await asyncio.sleep(7)
+            await message.answer("Останні штрихи...")
+            await asyncio.sleep(3)
+            how_all_abit = await abitlen.all_abit_len(message.from_user.id)
+            how_competitor_abit = await abitlen.competitors_abit_len(message.from_user.id)
+            await message.answer(f"Готово!\n На цю освітню програму наразі подано {how_all_abit}, але з усіх цих людей конкуренцію всм складають тільки {how_competitor_abit}\
+\nМожете дізнатися більше, використовуючи кнопки нище, або поверніться до головного меню, щоб перевірити інші освітні програми!", reply_markup=kb.abit_stat)
+
+
         else:
             await message.answer("Посилання повинно починатися з 'https://vstup.osvita.ua' та бути коректним")
     except ValueError:
         await message.answer("Будь ласка, введіть посилання на освітню програму")
+
+@router.callback_query(st.view_all, F.data)
+async def back_to_stat(callback: CallbackQuery, message:Message, state:FSMContext):
+    if callback== "abit_back_to_stat":
+        how_all_abit = await abitlen.all_abit_len(callback.from_user.id)
+        how_competitor_abit = await abitlen.competitors_abit_len(callback.from_user.id)
+        await message.answer(f"Готово!\nНа цю освітню програму наразі подано {how_all_abit}, але з усіх цих людей конкуренцію всм складають тільки {how_competitor_abit}\
+\nМожете дізнатися більше, використовуючи кнопки нище, або поверніться до головного меню, щоб перевірити інші освітні програми!", reply_markup=kb.abit_stat)
+
+# @router.callback_query()
+# await state.set_state(st.view_all)
+# keyboard = await kb.builder_abit_all(message.from_user.id, 1)
+# await message.answer("Hello", reply_markup=keyboard)
+
+@router.callback_query(st.view_all, F.data.startswith('abit_page_'))
+async def change_page(callback: CallbackQuery, state: FSMContext):
+    page = int(callback.data.split('_')[-1])
+    keyboard = await kb.builder_abit_all(callback.from_user.id, page)
+    await callback.message.edit_text("Осьо", reply_markup=keyboard)
 
 @router.message(F.text)
 async def forward(message: Message, state: FSMContext):
