@@ -58,46 +58,46 @@ mailing = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
-async def builder_abit_all(tg_id:int, page:int) -> InlineKeyboardMarkup:
-    abits = InlineKeyboardBuilder()
+async def builder_applicant_all(tg_id:int, page:int) -> InlineKeyboardMarkup:
+    applicants = InlineKeyboardBuilder()
     data = await rq.get_user_data(tg_id)
 
-    user_abits = [abit for abit in data if abit.user_tg_id == tg_id] # абітурієнт додається, тільки якщо він є в базі даних конкретного користувача
+    user_applicants = [applicant for applicant in data if applicant.user_tg_id == tg_id] # абітурієнт додається, тільки якщо він є в базі даних конкретного користувача
 
     per_page = 10
-    total_pages = (len(user_abits) + per_page - 1) // per_page
+    total_pages = (len(user_applicants) + per_page - 1) // per_page
     page = max(1, min(page, total_pages))
 
     start = (page - 1) * per_page
     end = start + per_page
-    current_page_abits = user_abits[start:end]
+    current_page_applicants = user_applicants[start:end]
 
-    for abits_all in current_page_abits:
-        abit_name = " ".join(abits_all.name.split(" ")[:2])
-        abits.button(
-                text=f"                    Ім'я: '{abit_name}' Бал: {abits_all.score}                    ", #Я тут тупо не знайшов інших способів зробити нормальний вигляд
-                callback_data=f'abit_{abits_all.id}'
+    for applicants_all in current_page_applicants:
+        applicant_name = " ".join(applicants_all.name.split(" ")[:2])
+        applicants.button(
+                text=f"                    Ім'я: '{applicant_name}' Бал: {applicants_all.score}                    ", #Я тут тупо не знайшов інших способів зробити нормальний вигляд
+                callback_data=f'applicant_{applicants_all.id}'
             )
-    abits.adjust(1)
+    applicants.adjust(1)
 
     nav_buttons = InlineKeyboardBuilder()
     #Тут щас буде та сама фігня з відступами. Ну немає в мене ідей і всьо, тільки якщо такими костилями
     if page > 1: # Це умова, щоб додавати кнопку "◀️", тільки якщо є попередня сторінка
-        nav_buttons.button(text="◀️", callback_data=f"abit_page_{page-1}")
-    nav_buttons.button(text=f"{page}/{total_pages}", callback_data="abit_back_to_stat")
+        nav_buttons.button(text="◀️", callback_data=f"applicant_page_{page-1}")
+    nav_buttons.button(text=f"{page}/{total_pages}", callback_data="applicant_back_to_stat")
     if page < total_pages:# Це умова, щоб додавати кнопку "▶️", тільки якщо є наступна сторінка
-        nav_buttons.button(text="▶️", callback_data=f"abit_page_{page+1}")
+        nav_buttons.button(text="▶️", callback_data=f"applicant_page_{page+1}")
     nav_buttons.adjust(3)# Це, щоб вони були в одному рядку
 
-    abits.attach(nav_buttons)
+    applicants.attach(nav_buttons)
 
-    return abits.as_markup()
+    return applicants.as_markup()
 
-async def builder_abit_competitions(tg_id:int, user_score:float, page:int) -> InlineKeyboardMarkup:
-    abits = InlineKeyboardBuilder()
+async def builder_applicant_competitors(tg_id:int, user_score:float, page:int) -> InlineKeyboardMarkup:
+    applicants = InlineKeyboardBuilder()
     data = await rq.get_user_data(tg_id)
 
-    user_competitors = [abit for abit in data if abit.user_tg_id == tg_id and abit.competitor] # Конкурент додається, тільки якщо він є у базі данних конкретного користувача
+    user_competitors = [applicant for applicant in data if applicant.user_tg_id == tg_id and applicant.competitor] # Конкурент додається, тільки якщо він є у базі данних конкретного користувача
 
     per_page = 10
     total_pages = (len(user_competitors) + per_page - 1) // per_page # Вираховує поточну кількість сторінок
@@ -109,28 +109,28 @@ async def builder_abit_competitions(tg_id:int, user_score:float, page:int) -> In
 
     for competitors_all in current_page_competitors:
         competitor_name = " ".join(competitors_all.name.split(" ")[:2])
-        abits.button(
-                text=f"Ім'я: '{competitor_name}' Бал: {competitors_all.score}",
+        applicants.button(
+                text=f"                    Ім'я: '{competitor_name}' Бал: {competitors_all.score}                    ",
                 callback_data=f'competitors_{competitors_all.id}'
             )
-        abits.adjust(1)
+        applicants.adjust(1)
 
     nav_buttons = InlineKeyboardBuilder()
     #Тут щас буде та сама фігня з відступами. Ну немає в мене ідей і всьо, тільки якщо такими костилями
     if page > 1: # Це умова, щоб додавати кнопку "◀️", тільки якщо є попередня сторінка
         nav_buttons.button(text="        ◀️        ", callback_data=f"competitors_page_{page-1}")
-    nav_buttons.button(text=f"        {page}/{total_pages}        ", callback_data="abit_back_to_stat")
+    nav_buttons.button(text=f"        {page}/{total_pages}        ", callback_data="applicant_back_to_stat")
     if page < total_pages: # Це умова, щоб додавати кнопку "▶️", тільки якщо є наступна сторінка
         nav_buttons.button(text="        ▶️        ", callback_data=f"competitors_page_{page+1}")
     nav_buttons.adjust(3)
 
-    abits.attach(nav_buttons)
+    applicants.attach(nav_buttons)
 
-    return abits.as_markup()
+    return applicants.as_markup()
 
 
-abit_stat = InlineKeyboardMarkup(
+applicant_stat = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text='Всі абітурієнти', callback_data="view_abit_all"), InlineKeyboardButton(text="Тільки конкуренти", callback_data="view_abit_competitors")]
+        [InlineKeyboardButton(text='Всі абітурієнти', callback_data="view_applicant_all"), InlineKeyboardButton(text="Тільки конкуренти", callback_data="view_applicant_competitors")]
     ]
 )

@@ -1,7 +1,7 @@
 import asyncio
 
 from aiogram import F, Router
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, StateFilter
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
@@ -11,7 +11,7 @@ import app.keyboards as kb
 import app.services.filter as fltr
 import app.services.mailing as mail
 import app.services.support as sup
-import app.services.abits_len as abitlen
+import app.services.applicants_len as applicantlen
 from app.states import States as st
 from collections import defaultdict
 
@@ -138,7 +138,8 @@ async def get_bal(message: Message, state: FSMContext):
 async def get_link(message: Message, state: FSMContext):
     try:
         if message.text.startswith('https://vstup.osvita.ua'):
-            # await fltr.filter_abits(message.from_user.id, user_score)
+            await state.set_state(st.choice_list)
+            # await fltr.filter_applicants(message.from_user.id, user_score)
             await message.answer("Сканування почалося. Це займе деякий час")
             await asyncio.sleep(3)
             await message.answer("Зачекайте ще декілька секунд...")
@@ -149,10 +150,10 @@ async def get_link(message: Message, state: FSMContext):
             await asyncio.sleep(7)
             await message.answer("Останні штрихи...")
             await asyncio.sleep(3)
-            how_all_abit = await abitlen.all_abit_len(message.from_user.id)
-            how_competitor_abit = await abitlen.competitors_abit_len(message.from_user.id)
-            await message.answer(f"Готово!\n На цю освітню програму наразі подано {how_all_abit}, але з усіх цих людей конкуренцію всм складають тільки {how_competitor_abit}\
-\nМожете дізнатися більше, використовуючи кнопки нище, або поверніться до головного меню, щоб перевірити інші освітні програми!", reply_markup=kb.abit_stat)
+            how_all_applicant = await applicantlen.all_applicant_len(message.from_user.id)
+            how_competitor_applicant = await applicantlen.competitors_applicant_len(message.from_user.id)
+            await message.answer(f"Готово!\nНа цю освітню програму наразі подано {how_all_applicant}, але з усіх цих людей конкуренцію вам складають тільки {how_competitor_applicant}\
+\nМожете дізнатися більше, використовуючи кнопки нище, або поверніться до головного меню, щоб перевірити інші освітні програми!", reply_markup=kb.applicant_stat)
 
 
         else:
@@ -160,24 +161,63 @@ async def get_link(message: Message, state: FSMContext):
     except ValueError:
         await message.answer("Будь ласка, введіть посилання на освітню програму")
 
-@router.callback_query(st.view_all, F.data)
-async def back_to_stat(callback: CallbackQuery, message:Message, state:FSMContext):
-    if callback== "abit_back_to_stat":
-        how_all_abit = await abitlen.all_abit_len(callback.from_user.id)
-        how_competitor_abit = await abitlen.competitors_abit_len(callback.from_user.id)
-        await message.answer(f"Готово!\nНа цю освітню програму наразі подано {how_all_abit}, але з усіх цих людей конкуренцію всм складають тільки {how_competitor_abit}\
-\nМожете дізнатися більше, використовуючи кнопки нище, або поверніться до головного меню, щоб перевірити інші освітні програми!", reply_markup=kb.abit_stat)
+@router.callback_query(StateFilter(st.view_all, st.view_competitors), F.data == "applicant_back_to_stat")
+async def back_to_stat(callback: CallbackQuery, state:FSMContext):
+    await callback.message.delete()
+    await state.set_state(st.choice_list)
+    how_all_applicant = await applicantlen.all_applicant_len(callback.from_user.id)
+    how_competitor_applicant = await applicantlen.competitors_applicant_len(callback.from_user.id)
+    await callback.message.answer(f"Повернено!\nНа цю освітню програму наразі подано {how_all_applicant}, але з усіх цих людей конкуренцію вам складають тільки {how_competitor_applicant}\
+\nМожете дізнатися більше, використовуючи кнопки нище, або поверніться до головного меню, щоб перевірити інші освітні програми!", reply_markup=kb.applicant_stat)
 
-# @router.callback_query()
-# await state.set_state(st.view_all)
-# keyboard = await kb.builder_abit_all(message.from_user.id, 1)
-# await message.answer("Hello", reply_markup=keyboard)
+@router.callback_query(st.choice_list, F.data == "view_applicant_all")
+async def view_applicant_all(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(st.view_all)
+    keyboard = await kb.builder_applicant_all(callback.from_user.id, 1)
+    await callback.message.edit_text("Всі заявки", reply_markup=keyboard)
 
-@router.callback_query(st.view_all, F.data.startswith('abit_page_'))
-async def change_page(callback: CallbackQuery, state: FSMContext):
+@router.callback_query(st.view_all, F.data.startswith('applicant_page_'))
+async def change_page_all(callback: CallbackQuery, state: FSMContext):
     page = int(callback.data.split('_')[-1])
-    keyboard = await kb.builder_abit_all(callback.from_user.id, page)
+    keyboard = await kb.builder_applicant_all(callback.from_user.id, page)
     await callback.message.edit_text("Осьо", reply_markup=keyboard)
+
+@router.callback_query(st.choice_list, F.data == "view_applicant_competitors")
+async def view_applicant_competitors(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(st.view_competitors)
+    keyboard = await kb.builder_applicant_competitors(callback.from_user.id, user_score[callback.from_user.id]['score'], 1)
+    await callback.message.edit_text("Всі заявки", reply_markup=keyboard)
+
+@router.callback_query(st.view_competitors, F.data.startswith('competitors_page_'))
+async def change_page_competitors(callback: CallbackQuery, state: FSMContext):
+    page = int(callback.data.split('_')[-1])
+    keyboard = await kb.builder_applicant_competitors(callback.from_user.id, user_score[callback.from_user.id]['score'], page)
+    await callback.message.edit_text("Осьо", reply_markup=keyboard)
+
+@router.callback_query(StateFilter(st.view_all, st.view_competitors), F.data.startswith('applicant_'))
+async def all_info(callback: CallbackQuery):
+    data = await rq.get_user_data(callback.from_user.id)
+    applicant_id = int(callback.data.split('_')[-1])
+    applicants = [applicant for applicant in data if applicant.user_tg_id == callback.from_user.id]
+    for applicant in applicants:
+        if applicant.id == applicant_id:
+            await callback.message.answer(
+f"""Повна інформація про абітурієнта:
+
+ПІП: {applicant.name}
+Статус заяви: {applicant.status}
+Приорітет на освітню програму: {applicant.priority}
+Коефіцієнтний бал на спеціальність: {applicant.score}
+
+Бали НМТ:
+ {applicant.detail}
+
+Коефіцієнт: {applicant.coefficient}
+Квота: {applicant.quota}
+Конкурентність: {bool(applicant.competitor)}
+Посилання на абіт-пошук:
+{applicant.link}""")
+
 
 @router.message(F.text)
 async def forward(message: Message, state: FSMContext):

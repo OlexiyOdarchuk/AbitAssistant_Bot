@@ -1,6 +1,6 @@
 from app.database.models import async_session, metadata, engine
 from app.database.models import User, UserData
-from sqlalchemy import Column, Integer, String, Table, select
+from sqlalchemy import Column, Integer, String, Table, select, delete
 
 async def set_user(tg_id):
     async with async_session() as session:
@@ -41,6 +41,10 @@ async def set_user_data(tg_id, name, status, priority, score, detail, coefficien
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
 
         if user:
+            # Видаляємо попередні дані користувача з таблиці UserData
+            await session.execute(
+                        delete(UserData).where(UserData.user_tg_id == tg_id)
+                    )
             # Додаємо дані для користувача в таблицю UserData
             user_data = UserData(
                 user_tg_id=tg_id,
