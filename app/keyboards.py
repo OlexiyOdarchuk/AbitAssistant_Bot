@@ -111,7 +111,7 @@ async def builder_applicant_competitors(tg_id:int, user_score:float, page:int) -
         competitor_name = " ".join(competitors_all.name.split(" ")[:2])
         applicants.button(
                 text=f"                    Ім'я: '{competitor_name}' Бал: {competitors_all.score}                    ",
-                callback_data=f'competitors_{competitors_all.id}'
+                callback_data=f'applicant_{competitors_all.id}'
             )
         applicants.adjust(1)
 
