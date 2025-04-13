@@ -27,37 +27,43 @@ async def get_support_text(message: Message, state: FSMContext):
     )
 
     try:
-        forwarded_message = await bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"Повідомлення від користувача {message.from_user.url}:\n\n{message.text}\n\nБуло надіслано в З'вязок",
-        )
+        for admin in ADMIN_ID:
+            forwarded_message = await bot.send_message(
+                chat_id=admin,
+                text=f"Повідомлення від користувача {message.from_user.url}:\n\n{message.text}\n\nБуло надіслано в З'вязок",
+            )
 
-        user_messages[forwarded_message.message_id] = message.chat.id
+            user_messages[forwarded_message.message_id] = message.chat.id
 
     except Exception as e:
-        await bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"Помилка при відправці повідомлення від користувача {message.from_user.url}: {e}",
-        )
+        for admin in ADMIN_ID:
+            await bot.send_message(
+                chat_id=admin,
+                text=f"Помилка при відправці повідомлення від користувача {message.from_user.url}: {e}",
+            )
 
 
 async def forward(message: Message, state: FSMContext):
-    if message.reply_to_message and message.from_user.id == ADMIN_ID:
-        original_chat_id = user_messages.get(message.reply_to_message.message_id)
-        if original_chat_id:
-            try:
-                await bot.send_message(
-                    original_chat_id,
-                    f"Адміністратор відповів на ваше звернення: \n{message.text}",
-                )
-            except Exception as e:
-                await bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"Помилка при відправці повідомлення користувачу tg://user?id={original_chat_id}: {e}",
-        )
-                
-    if message.from_user.id != ADMIN_ID:
-        await bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"Повідомлення від користувача {message.from_user.url}:\n\n{message.md_text} \n\nБуло надіслано випадково",
-        )
+    if message.reply_to_message:
+        for admin in ADMIN_ID:
+            if message.from_user.id == admin:
+                original_chat_id = user_messages.get(message.reply_to_message.message_id)
+                if original_chat_id:
+                    try:
+                        await bot.send_message(
+                            original_chat_id,
+                            f"Адміністратор відповів на ваше звернення: \n{message.text}",
+                        )
+                    except Exception as e:
+                        await bot.send_message(
+                            chat_id=admin,
+                            text=f"Помилка при відправці повідомлення користувачу tg://user?id={original_chat_id}: {e}",
+                        )
+                break  # не перевіряємо інших адмінів, якщо вже знайшли
+
+    if message.from_user.id not in ADMIN_ID:
+        for admin in ADMIN_ID:
+            await bot.send_message(
+                chat_id=admin,
+                text=f"Повідомлення від користувача {message.from_user.url}:\n\n{message.md_text} \n\nБуло надіслано випадково",
+            )

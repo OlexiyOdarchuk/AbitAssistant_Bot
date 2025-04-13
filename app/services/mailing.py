@@ -11,7 +11,7 @@ from app.states import States as st
 
 
 async def mailing(message: Message, state: FSMContext):
-    if message.from_user.id == ADMIN_ID:
+    if message.from_user.id in ADMIN_ID:
         await message.answer(
             "📣 Надішліть текст розсилки: 📣", reply_markup=kb.return_back
         )
@@ -51,16 +51,17 @@ async def init(message: Message, state: FSMContext):
             sent_count += 1
             await asyncio.sleep(0.1)
         except Exception as e:
-            await bot.send_message(
-                chat_id=ADMIN_ID,
-                text=f"Помилка при відправці користувачу tg://user?id={user}: {e}",
-            )
+            for admin in ADMIN_ID:
+                    await bot.send_message(
+                        chat_id=admin,
+                        text=f"Помилка при відправці користувачу tg://user?id={user}: {e}",
+                    )
 
     elapsed_time = round(time.time() - start_time, 2)
-
-    await bot.send_message(
-        chat_id=ADMIN_ID,
-        text=f"Розсилка завершена! \nВідправлено {sent_count} повідомлень за {elapsed_time} секунд.",
-        reply_markup=kb.admin_main,
-    )
+    for admin in ADMIN_ID:
+        await bot.send_message(
+            chat_id=admin,
+            text=f"Розсилка завершена! \nВідправлено {sent_count} повідомлень за {elapsed_time} секунд.",
+            reply_markup=kb.admin_main,
+        )
     await state.set_state(None)

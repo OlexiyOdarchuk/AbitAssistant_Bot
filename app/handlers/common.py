@@ -12,7 +12,7 @@ router = Router()
 
 @router.message(CommandStart())
 async def start(message: Message):
-    if message.from_user.id == ADMIN_ID:
+    if message.from_user.id in ADMIN_ID:
         await rq.set_user(message.from_user.id)
         await message.answer(
             "О, ку!\nНа менюшку, може вона тобі треба)", reply_markup=kb.admin_main
@@ -38,7 +38,7 @@ P.s. Та має не 200 з усіх предметів НМТ..
 
 @router.message(F.text == "❌ До головного меню")
 async def return_back(message: Message, state: FSMContext):
-    if message.from_user.id == ADMIN_ID:
+    if message.from_user.id in ADMIN_ID:
         await state.set_state(None)
         await message.answer(
             "Ви в головному меню.\nДля координації по боту скористайтеся кнопками нижче👇",
