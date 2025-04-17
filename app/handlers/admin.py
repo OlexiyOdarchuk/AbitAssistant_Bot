@@ -12,7 +12,7 @@ async def mailing(message: Message, state: FSMContext):
     await mail.mailing(message, state)
 
 
-@router.message(st.get_mailing, F.text)
+@router.message(st.get_mailing)
 async def get_mailing_text(message: Message, state: FSMContext):
     await mail.get_mailing_text(message, state)
 

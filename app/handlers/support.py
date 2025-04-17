@@ -11,10 +11,14 @@ router = Router()
 async def support(message: Message, state: FSMContext):
     await sup.support(message, state)
 
-@router.message(st.get_support, F.text)
-async def get_support_text(message: Message, state: FSMContext):
-    await sup.get_support_text(message, state)
+@router.message(st.get_support, F.text == "📤 Відправити")
+async def send_all_to_admin(message: Message, state: FSMContext):
+    await sup.send_all_to_admin(message, state)
+
+@router.message(st.get_support)
+async def collect_messages(message: Message, state: FSMContext):
+    await sup.collect_user_message(message, state)
 
 @router.message(F.text)
-async def forward(message: Message, state: FSMContext):
+async def forward_reply_from_admin(message: Message, state: FSMContext):
     await sup.forward(message, state)

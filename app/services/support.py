@@ -1,46 +1,56 @@
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
-
 from config import ADMIN_ID, bot
 import app.keyboards as kb
 from app.states import States as st
 
 user_messages = {}
 
-
 async def support(message: Message, state: FSMContext):
     await message.answer(
-        "Наступне повідомлення буде відправлено адміністрації, формулюйте його уважно:",
-        reply_markup=kb.return_back,
+        "Надсилайте повідомлення для адміністрації (можна кілька: текст, фото, відео). "
+        "Коли будете готові — натисніть '📤 Відправити'.",
+        reply_markup=kb.support,
     )
     await state.set_state(st.get_support)
+    await state.update_data(messages=[])
 
+async def collect_user_message(message: Message, state: FSMContext):
+    data = await state.get_data()
+    stored_messages = data.get("messages", [])
 
-async def get_support_text(message: Message, state: FSMContext):
-    await message.answer(
-        "Ваше повідомлення зареєстровано, дякую за відгук. \nВам дадуть відповідь найближчим часом."
-    )
-    await state.set_state(None)
-    await message.answer(
-        "Ви в головному меню.\nДля координації по боту скористайтеся кнопками нижче👇",
-        reply_markup=kb.user_main,
-    )
+    stored_messages.append(message)
+    await state.update_data(messages=stored_messages)
 
-    try:
+    await message.answer("✅ Повідомлення збережено. Ви можете додати ще або натиснути '📤 Відправити'.")
+
+async def send_all_to_admin(message: Message, state: FSMContext):
+    data = await state.get_data()
+    messages = data.get("messages", [])
+
+    if not messages:
+        await message.answer("⚠️ Ви ще не надіслали жодного повідомлення.")
+        return
+
+    for admin in ADMIN_ID:
+        await bot.send_message(
+            chat_id=admin,
+            text=f"📩 Нове звернення від {message.from_user.full_name} (Link: tg://user?id={message.from_user.id})",
+        )
+
+    for msg in messages:
         for admin in ADMIN_ID:
-            forwarded_message = await bot.send_message(
-                chat_id=admin,
-                text=f"Повідомлення від користувача {message.from_user.url}:\n\n{message.text}\n\nБуло надіслано в З'вязок",
-            )
+            try:
+                forwarded = await msg.send_copy(chat_id=admin)
+                user_messages[forwarded.message_id] = message.chat.id
+            except Exception as e:
+                await bot.send_message(
+                    chat_id=admin,
+                    text=f"❌ Помилка при надсиланні повідомлення: {e}"
+                )
 
-            user_messages[forwarded_message.message_id] = message.chat.id
-
-    except Exception as e:
-        for admin in ADMIN_ID:
-            await bot.send_message(
-                chat_id=admin,
-                text=f"Помилка при відправці повідомлення від користувача {message.from_user.url}: {e}",
-            )
+    await message.answer("✅ Ваші повідомлення надіслано адміністрації.", reply_markup=kb.user_main)
+    await state.clear()
 
 
 async def forward(message: Message, state: FSMContext):
@@ -51,19 +61,20 @@ async def forward(message: Message, state: FSMContext):
                 if original_chat_id:
                     try:
                         await bot.send_message(
-                            original_chat_id,
-                            f"Адміністратор відповів на ваше звернення: \n{message.text}",
+                            chat_id=original_chat_id,
+                            text="📬 Відповідь від адміністратора:"
                         )
+                        await message.send_copy(chat_id=original_chat_id)
                     except Exception as e:
                         await bot.send_message(
                             chat_id=admin,
-                            text=f"Помилка при відправці повідомлення користувачу tg://user?id={original_chat_id}: {e}",
+                            text=f"❌ Не вдалося надіслати відповідь: {e}"
                         )
-                break  # не перевіряємо інших адмінів, якщо вже знайшли
-
-    if message.from_user.id not in ADMIN_ID:
+                break
+    elif message.from_user.id not in ADMIN_ID:
         for admin in ADMIN_ID:
             await bot.send_message(
                 chat_id=admin,
-                text=f"Повідомлення від користувача {message.from_user.url}:\n\n{message.md_text} \n\nБуло надіслано випадково",
+                text=f"⚠️ Повідомлення від користувача {message.from_user.full_name} (Link: tg://user?id={message.from_user.id}):"
             )
+            await message.send_copy(chat_id=admin)
