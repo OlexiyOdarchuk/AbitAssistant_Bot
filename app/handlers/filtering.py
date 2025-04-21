@@ -13,17 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import asyncio
 from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
+from app.services.parse_in_db import parser
 import app.keyboards as kb
 import app.services.applicants_len as applicantlen
 from app.states import States as st
-from collections import defaultdict
+from config import user_score
 
-user_score = defaultdict(dict)
 router = Router()
 
 @router.message(F.text == "📝Почати відсіювання!📝")
@@ -37,7 +36,7 @@ async def start_filter(message: Message, state: FSMContext):
 async def get_bal(message: Message, state: FSMContext):
     try:
         if 100.000 <= float(message.text) <= 200.000:
-            user_score[message.from_user.id]['score'] = message.text
+            user_score[message.from_user.id] = float(message.text)
             await state.set_state(st.get_link)
             await message.answer("Супер! Тепер відправте посилання на освітню програму з сайту vstup.osvita, наприклад:\n'https://vstup.osvita.ua/y2024/r27/41/1352329/'")
         else:
@@ -50,21 +49,12 @@ async def get_link(message: Message, state: FSMContext):
     try:
         if message.text.startswith('https://vstup.osvita.ua'):
             await state.set_state(st.choice_list)
-            # await fltr.filter_applicants(message.from_user.id, user_score) # Це буде тоді, коли допишу фільтр
-            await message.answer("Сканування почалося. Це займе деякий час", reply_markup=kb.remove_keyboard)
-            await asyncio.sleep(3)
-            await message.answer("Зачекайте ще декілька секунд...")
-            await asyncio.sleep(7)
-            await message.answer("Ще трохи...")
-            await asyncio.sleep(7)
-            await message.answer("Майже готово...")
-            await asyncio.sleep(7)
-            await message.answer("Останні штрихи...")
-            await asyncio.sleep(3)
+            await message.answer("Сканування почалося. Це займе деякий час...", reply_markup=kb.remove_keyboard)
+            await parser(message.text, message.from_user.id)
             await message.answer("Готово!", reply_markup=kb.return_back)
             how_all_applicant = await applicantlen.all_applicant_len(message.from_user.id)
             how_competitor_applicant = await applicantlen.competitors_applicant_len(message.from_user.id)
-            await message.answer(f"На цю освітню програму наразі подано {how_all_applicant}, але з усіх цих людей конкуренцію вам складають тільки {how_competitor_applicant}\
+            await message.answer(f"На цю освітню програму наразі подано {how_all_applicant} бюджетних заявок, але з усіх цих людей конкуренцію вам складають тільки {how_competitor_applicant}\
 \nМожете дізнатися більше, використовуючи кнопки нище, або поверніться до головного меню, щоб перевірити інші освітні програми!", reply_markup=kb.applicant_stat)
 
 

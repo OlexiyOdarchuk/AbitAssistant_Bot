@@ -27,7 +27,7 @@ async def generate_link(name: str) -> str:
     await asyncio.sleep(0)
     parts = name.split()
     if len(parts) < 2:
-        return "Помилка: Неправильно введене ім'я!!!"
+        return "Помилка генерації посилання: Ім'я повинно складатися з принаймні двох слів"
     surname = parts[0]
     first_initial = parts[1][0]
     if len(parts) > 2:

@@ -14,6 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from aiogram import Bot
-TELEGRAM_TOKEN = "YOUR_TELEGRAM_TOKEN"
+TELEGRAM_TOKEN = "YOUR_TELEGRAM_TOKEN" # API Token телеграм бота
 bot = Bot(token=TELEGRAM_TOKEN)
-ADMIN_ID = [1234567890, 6587654321, 1122334455] #Тут ID ваших Адміністраторів
+ADMIN_ID = [1234567890, 6587654321, 1122334455] # ID ваших Адміністраторів
+user_score = {}

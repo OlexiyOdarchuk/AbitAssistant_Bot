@@ -23,6 +23,7 @@ dependencies = [
     "aiogram>=3.19.0",
     "aiosqlite>=0.21.0",
     "alembic>=1.15.2",
+    "bs4>=0.0.2",
     "pydantic>=2.10.6",
     "pydantic-settings>=2.8.1",
     "selenium>=4.30.0",

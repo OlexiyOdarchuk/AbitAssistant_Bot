@@ -68,10 +68,9 @@
 │   │   ├── [viewing.py](./app/handlers/viewing.py) — перегляд абітурієнтів<br>
 │   ├── services/ — основна логіка бота (парсинг, аналіз, генерація)<br>
 │   │   ├── [applicants_len.py](./app/services/applicants_len.py) — підрахунок абітурієнтів<br>
-│   │   ├── [filter.py](./app/services/filter.py) — аналіз і додавання до БД<br>
+│   │   ├── [parse_in_db.py](./app/services/parse_in_db.py) — парсинг, аналіз і додавання даних до БД<br>
 │   │   ├── [generate_link.py](./app/services/generate_link.py) — генерування посилань<br>
 │   │   ├── [mailing.py](./app/services/mailing.py) — розсилки<br>
-│   │   ├── [parser.py](./app/services/parser.py) — парсинг із vstup.osvita.ua<br>
 │   │   ├── [support.py](./app/services/support.py) — обробка відгуків<br>
 │   ├── [keyboards.py](./app/keyboards.py) — кнопки та клавіатури<br>
 │   ├── [states.py](./app/states.py) — стани FSM<br>

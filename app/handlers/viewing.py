@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import re
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
@@ -22,7 +23,7 @@ import app.keyboards as kb
 import app.database.requests as rq
 import app.services.applicants_len as applicantlen
 from app.states import States as st
-from app.handlers.filtering import user_score
+from config import user_score
 
 router = Router()
 
@@ -50,35 +51,42 @@ async def change_page_all(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(st.choice_list, F.data == "view_applicant_competitors")
 async def view_applicant_competitors(callback: CallbackQuery, state: FSMContext):
     await state.set_state(st.view_competitors)
-    keyboard = await kb.builder_applicant_competitors(callback.from_user.id, user_score[callback.from_user.id]['score'], 1)
+    keyboard = await kb.builder_applicant_competitors(callback.from_user.id, user_score[callback.from_user.id], 1)
     await callback.message.edit_text("Всі заявки", reply_markup=keyboard)
 
 @router.callback_query(st.view_competitors, F.data.startswith('competitors_page_'))
 async def change_page_competitors(callback: CallbackQuery, state: FSMContext):
     page = int(callback.data.split('_')[-1])
-    keyboard = await kb.builder_applicant_competitors(callback.from_user.id, user_score[callback.from_user.id]['score'], page)
+    keyboard = await kb.builder_applicant_competitors(callback.from_user.id, user_score[callback.from_user.id], page)
     await callback.message.edit_text("Осьо", reply_markup=keyboard)
 
 @router.callback_query(StateFilter(st.view_all, st.view_competitors), F.data.startswith('applicant_'))
 async def all_info(callback: CallbackQuery):
+    await callback.answer()
     data = await rq.get_user_data(callback.from_user.id)
     applicant_id = int(callback.data.split('_')[-1])
     applicants = [applicant for applicant in data if applicant.user_tg_id == callback.from_user.id]
     for applicant in applicants:
         if applicant.id == applicant_id:
+            display_quota = applicant.quota if applicant.quota else "-"
+            display_coefficient = applicant.coefficient if applicant.coefficient else "-"
+            formatted_detail = "-"
+            if applicant.detail:
+                formatted_detail = re.sub(r'([А-ЯІЇЄA-Zа-яіїєҐґ\s]+?)(\d{2,3})(?=[А-ЯІЇЄA-Z])', r'\1: \2\n', applicant.detail).strip() # ([А-ЯІЇЄA-Zа-яіїєҐґ\s]+?) - ловить назву, (\d{2,3}) - ловить число, (?=[А-ЯІЇЄA-Z]) - після числа повинно бути велика літера
             await callback.message.answer(
 f"""Повна інформація про абітурієнта:
 
 ПІП: {applicant.name}
 Статус заяви: {applicant.status}
-Приорітет на освітню програму: {applicant.priority}
-Коефіцієнтний бал на спеціальність: {applicant.score}
+Пріоритет на освітню програму: {applicant.priority}
+Коефіцієнтний бал на спеціальність: {applicant.score if applicant.score else '-'}
 
 Бали НМТ:
- {applicant.detail}
+{formatted_detail}
 
-Коефіцієнт: {applicant.coefficient}
-Квота: {applicant.quota}
-Конкурентність: {bool(applicant.competitor)}
+Коефіцієнт: {display_coefficient}
+Квота: {display_quota}
+Конкурентність: {'Конкурент' if applicant.competitor else 'Не конкурент'}
 Посилання на абіт-пошук:
-{applicant.link}""")
+{applicant.link if applicant.link else '-'}
+""")

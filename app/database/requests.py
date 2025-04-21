@@ -16,8 +16,9 @@
 from app.database.models import async_session, metadata, engine
 from app.database.models import User, UserData
 from sqlalchemy import Column, Integer, String, Table, select, delete
+from typing import List
 
-async def set_user(tg_id):
+async def set_user(tg_id) -> None:
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
 
@@ -25,7 +26,8 @@ async def set_user(tg_id):
             session.add(User(tg_id=tg_id))
             await session.commit()
 
-async def create_user_data_table():
+async def create_user_data_table() -> None:
+    """Створює таблицю UserData."""
     user_data_table = Table(
         'user__data', metadata,
         Column('id', Integer, primary_key=True),
@@ -39,17 +41,20 @@ async def create_user_data_table():
         Column('quota', String, nullable=True),
         Column('link', String, nullable=False),
         Column('competitor', Integer, nullable=False),
+        extend_existing=True
     )
 
     async with engine.begin() as conn:
         await conn.run_sync(metadata.create_all)
 
 async def get_users():
+    """Повертає список користувачів з таблиці User."""
     async with async_session() as session:
         result = await session.execute(select(User.tg_id))
         return result.scalars().all()
 
-async def set_user_data(tg_id, name, status, priority, score, detail, coefficient, quota, link, competitor):
+async def set_user_data(tg_id: int, name: str, status: str, priority: int, score: float, detail: str, coefficient: str, quota: str, link: str, competitor: bool) -> None:
+    """Встановлює дані користувача в таблицю UserData."""
     await create_user_data_table()
     async with async_session() as session:
         # Перевіряємо, чи існує запис користувача
@@ -57,9 +62,6 @@ async def set_user_data(tg_id, name, status, priority, score, detail, coefficien
 
         if user:
             # Видаляємо попередні дані користувача з таблиці UserData
-            await session.execute(
-                        delete(UserData).where(UserData.user_tg_id == tg_id)
-                    )
             # Додаємо дані для користувача в таблицю UserData
             user_data = UserData(
                 user_tg_id=tg_id,
@@ -79,7 +81,8 @@ async def set_user_data(tg_id, name, status, priority, score, detail, coefficien
             # Якщо користувач не знайдений, можна повернути помилку чи створити його
             raise Exception("User not found")
 
-async def get_user_data(tg_id):
+async def get_user_data(tg_id: int) -> List[UserData]:
+    """Повертає дані користувача з таблиці UserData."""
     async with async_session() as session:
         # Перевіряємо, чи існує запис користувача
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
@@ -91,3 +94,11 @@ async def get_user_data(tg_id):
             return user_data
         else:
             raise Exception("User not found")
+
+async def clear_user_data(tg_id: int) -> None:
+    """Видаляє всі записи користувача перед новим парсингом."""
+    async with async_session() as session:
+        await session.execute(
+            delete(UserData).where(UserData.user_tg_id == tg_id)
+        )
+        await session.commit()

@@ -15,8 +15,8 @@
 
 import asyncio
 import logging
-
 from aiogram import Dispatcher
+
 from config import bot
 from app.handlers import setup_routers
 from app.database.models import async_main

@@ -10,4 +10,4 @@ wheels/
 .venv
 config.py
 app/database/db.sqlite3
-app/files
+test.py

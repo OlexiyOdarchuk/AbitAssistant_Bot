@@ -26,6 +26,7 @@ from app.states import States as st
 
 
 async def mailing(message: Message, state: FSMContext):
+    """Отримує повідомлення для розсилки"""
     if message.from_user.id in ADMIN_ID:
         await message.answer(
             "📣 Надішліть текст або фото з підписом для розсилки: 📣", reply_markup=kb.return_back
@@ -42,6 +43,7 @@ async def mailing(message: Message, state: FSMContext):
 
 
 async def get_mailing_text(message: Message, state: FSMContext):
+    """Сортує повідомлення для розсилки за типом"""
     if message.photo:
         photo_id = message.photo[-1].file_id
         caption = message.caption or ""
@@ -63,6 +65,7 @@ async def get_mailing_text(message: Message, state: FSMContext):
 
 
 async def init(message: Message, state: FSMContext):
+    """Починаємо розсилку"""
     data = await state.get_data()
     mailing_text = data.get("mailing_text", "Текст не знайдено!!!")
     mailing_photo = data.get("mailing_photo", None)

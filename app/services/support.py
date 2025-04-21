@@ -15,6 +15,7 @@
 
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
+
 from config import ADMIN_ID, bot
 import app.keyboards as kb
 from app.states import States as st
@@ -22,6 +23,7 @@ from app.states import States as st
 user_messages = {}
 
 async def support(message: Message, state: FSMContext):
+    """Приймає повідомлення від користувача для адміністрації"""
     await message.answer(
         "Надсилайте повідомлення для адміністрації (можна кілька: текст, фото, відео). "
         "Коли будете готові — натисніть '📤 Відправити'.",
@@ -40,6 +42,7 @@ async def collect_user_message(message: Message, state: FSMContext):
     await message.answer("✅ Повідомлення збережено. Ви можете додати ще або натиснути '📤 Відправити'.")
 
 async def send_all_to_admin(message: Message, state: FSMContext):
+    """Відправляє збережені повідомлення адміністраторам"""
     data = await state.get_data()
     messages = data.get("messages", [])
 
@@ -69,6 +72,7 @@ async def send_all_to_admin(message: Message, state: FSMContext):
 
 
 async def forward(message: Message, state: FSMContext):
+    """Відправляє повідомлення відповіді адміністратора"""
     if message.reply_to_message:
         for admin in ADMIN_ID:
             if message.from_user.id == admin:
