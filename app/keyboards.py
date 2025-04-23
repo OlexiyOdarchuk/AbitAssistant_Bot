@@ -98,12 +98,12 @@ async def builder_applicant_all(tg_id:int, page:int) -> InlineKeyboardMarkup:
     applicants.adjust(1)
 
     nav_buttons = InlineKeyboardBuilder()
-    #Тут щас буде та сама фігня з відступами. Ну немає в мене ідей і всьо, тільки якщо такими костилями
+    #Тут щас буде фігня з відступами. Ну немає в мене ідей і всьо, тільки якщо такими костилями
     if page > 1: # Це умова, щоб додавати кнопку "◀️", тільки якщо є попередня сторінка
-        nav_buttons.button(text="◀️", callback_data=f"applicant_page_{page-1}")
-    nav_buttons.button(text=f"{page}/{total_pages}", callback_data="applicant_back_to_stat")
+        nav_buttons.button(text="        ◀️        ", callback_data=f"applicant_page_{page-1}")
+    nav_buttons.button(text=f"        {page}/{total_pages}        ", callback_data="applicant_back_to_stat")
     if page < total_pages:# Це умова, щоб додавати кнопку "▶️", тільки якщо є наступна сторінка
-        nav_buttons.button(text="▶️", callback_data=f"applicant_page_{page+1}")
+        nav_buttons.button(text="        ▶️        ", callback_data=f"applicant_page_{page+1}")
     nav_buttons.adjust(3)# Це, щоб вони були в одному рядку
 
     applicants.attach(nav_buttons)

@@ -40,25 +40,25 @@ async def back_to_stat(callback: CallbackQuery, state:FSMContext):
 async def view_applicant_all(callback: CallbackQuery, state: FSMContext):
     await state.set_state(st.view_all)
     keyboard = await kb.builder_applicant_all(callback.from_user.id, 1)
-    await callback.message.edit_text("Всі заявки", reply_markup=keyboard)
+    await callback.message.edit_text("Всі буджетні заяви на дану освітню програму", reply_markup=keyboard)
 
 @router.callback_query(st.view_all, F.data.startswith('applicant_page_'))
 async def change_page_all(callback: CallbackQuery, state: FSMContext):
     page = int(callback.data.split('_')[-1])
     keyboard = await kb.builder_applicant_all(callback.from_user.id, page)
-    await callback.message.edit_text("Осьо", reply_markup=keyboard)
+    await callback.message.edit_text("Натисніть на абітурієнта, щоб побачити повну інформацію\nНатисніть на кнопки керування, щоб пересуватися сторінками та на номер сторінки, щоб повернутися до попереднього меню", reply_markup=keyboard)
 
 @router.callback_query(st.choice_list, F.data == "view_applicant_competitors")
 async def view_applicant_competitors(callback: CallbackQuery, state: FSMContext):
     await state.set_state(st.view_competitors)
     keyboard = await kb.builder_applicant_competitors(callback.from_user.id, user_score[callback.from_user.id], 1)
-    await callback.message.edit_text("Всі заявки", reply_markup=keyboard)
+    await callback.message.edit_text("Всі конкурентноспроможні заявки на дану освітню програму", reply_markup=keyboard)
 
 @router.callback_query(st.view_competitors, F.data.startswith('competitors_page_'))
 async def change_page_competitors(callback: CallbackQuery, state: FSMContext):
     page = int(callback.data.split('_')[-1])
     keyboard = await kb.builder_applicant_competitors(callback.from_user.id, user_score[callback.from_user.id], page)
-    await callback.message.edit_text("Осьо", reply_markup=keyboard)
+    await callback.message.edit_text("Натисніть на абітурієнта, щоб побачити повну інформацію\nНатисніть на кнопки керування, щоб пересуватися сторінками та на номер сторінки, щоб повернутися до попереднього меню", reply_markup=keyboard)
 
 @router.callback_query(StateFilter(st.view_all, st.view_competitors), F.data.startswith('applicant_'))
 async def all_info(callback: CallbackQuery):

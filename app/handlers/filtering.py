@@ -49,7 +49,7 @@ async def get_link(message: Message, state: FSMContext):
     try:
         if message.text.startswith('https://vstup.osvita.ua'):
             await state.set_state(st.choice_list)
-            await message.answer("Сканування почалося. Це займе деякий час...", reply_markup=kb.remove_keyboard)
+            await message.answer("Сканування почалося. Це займе до 3 хвилин...", reply_markup=kb.remove_keyboard)
             await parser(message.text, message.from_user.id)
             await message.answer("Готово!", reply_markup=kb.return_back)
             how_all_applicant = await applicantlen.all_applicant_len(message.from_user.id)
