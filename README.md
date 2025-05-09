@@ -13,7 +13,7 @@
 ### 🌐 Мова / Language
 
 - [Українська](README.md)
-- [English](README_en.md).
+- [English](README_en.md)
 
 ---
 ## 🛠️ Технології
