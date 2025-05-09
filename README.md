@@ -10,6 +10,12 @@
 
 ---
 
+### 🌐 Мова / Language
+
+- [Українська](README.md)
+- [English](README_en.md).
+
+---
 ## 🛠️ Технології
 
 - [Python](https://www.python.org/)
