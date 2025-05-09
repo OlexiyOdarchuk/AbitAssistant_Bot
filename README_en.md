@@ -13,8 +13,19 @@
 ### 🌐 Мова / Language
 
 - [Українська](README.md)
-- [English](README_en.md).
+- [English](README_en.md)
 
+---
+
+## 🛠️ Technologies
+
+- [Python](https://www.python.org/)
+- [Aiogram](https://github.com/aiogram/aiogram)
+- [Selenium](https://pypi.org/project/selenium/)
+- [SQLAlchemy](https://www.sqlalchemy.org/)
+- [SQLite](https://sqlite.org/index.html)
+
+---
 
 ### 🚀 Quick Start
 
