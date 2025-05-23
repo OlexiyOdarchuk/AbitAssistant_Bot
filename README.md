@@ -42,7 +42,7 @@ cd AbitAssistant_Bot
 ```bash
 # 3. Створіть файл config.py на основі config.example.py
 cp config.example.py config.py
-# Відредагуйте його та внесіть свої дані (токен бота, базу тощо)
+# Відредагуйте його та внесіть свої дані (токен бота, id адміністраторів)
 ```
 
 ```bash
