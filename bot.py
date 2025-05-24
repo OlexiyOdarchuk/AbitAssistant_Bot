@@ -15,9 +15,10 @@
 
 import asyncio
 import logging
+import asyncpg
 from aiogram import Dispatcher
 
-from config import bot
+from config import bot, DATABASE_URL
 from app.handlers import setup_routers
 from app.database.models import async_main
 
@@ -25,10 +26,26 @@ from app.database.models import async_main
 dp = Dispatcher()
 
 
+async def wait_for_postgres(dsn: str, timeout: int = 30):
+    dsn_clean = dsn.replace("+asyncpg", "")  # asyncpg.connect не розуміє префікс SQLAlchemy
+    for i in range(timeout):
+        try:
+            conn = await asyncpg.connect(dsn_clean)
+            await conn.close()
+            logging.info("PostgreSQL is ready!")
+            return
+        except Exception as e:
+            logging.warning(f"Waiting for PostgreSQL... {e}")
+            await asyncio.sleep(1)
+    raise TimeoutError("PostgreSQL did not become available in time.")
+
+
 async def main():
+    await wait_for_postgres(DATABASE_URL)
     await async_main()
     setup_routers(dp)
     await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

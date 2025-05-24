@@ -8,6 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
-config.py
+.env
+
+#Private files
 app/database/db.sqlite3
 test.py
+config.py
+docker-compose.yml

@@ -2,6 +2,8 @@ FROM python:3.13.3-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    vim \
+    fish \
     libsqlite3-dev \
     wget \
     ca-certificates \
@@ -25,13 +27,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxinerama1 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Створюємо ізольованого користувача (безпечніше)
+RUN useradd -m botuser
+
 WORKDIR /AbitAssistant_Bot
 
-# Копіювання файлів проєкту
-COPY . .
-
-# Встановлення Python-залежностей
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Команда запуску бота
+COPY . .
+
+USER botuser
+
 CMD ["python", "bot.py"]

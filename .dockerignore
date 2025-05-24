@@ -5,9 +5,15 @@ build/
 dist/
 wheels/
 *.egg-info
+
+# Unnecessary files
 .git
 .gitignore
+test.py
+README.md
+README_en.md
+uv.lock
+LICENSE
 
 # Virtual environments
 .venv
-test.py

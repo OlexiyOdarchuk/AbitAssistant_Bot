@@ -123,10 +123,14 @@ async def parse_rows(driver) -> list[dict]:
 async def parser(url: str, tg_id: int):
     """Працює з сторінкою, обробляє дані і зберігає їх у базі даних."""
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--log-level=3')
+    chrome_options.add_argument("--headless=new")  # новий headless режим
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")  # для обмежень shm
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--window-size=1920,1080")
+    chrome_options.add_argument("--disable-software-rasterizer")
+    chrome_options.add_argument("--remote-debugging-port=9222")
+    chrome_options.add_argument("--loglevel=3")
 
     driver = await fetch_driver(url, chrome_options)
     try:
@@ -135,6 +139,8 @@ async def parser(url: str, tg_id: int):
         rows = await parse_rows(driver)
 
         excluded_statuses = ('Відхилено', 'Відмовлено', 'Скасовано')
+
+        new_user_data = []
 
         for idx, row in enumerate(rows, start=1):
             if row['app_type'].upper() == 'К':
@@ -148,19 +154,19 @@ async def parser(url: str, tg_id: int):
             )
             link = await generate_link(row['name'])
 
-            await set_user_data(
-                tg_id=tg_id,
-                name=row['name'],
-                status=row['status'],
-                priority=row['priority'],
-                score=row['score'],
-                detail=row['detail'],
-                coefficient=row['coefficient'],
-                quota=row['quota'],
-                link=link,
-                competitor=competitor
-            )
+            new_user_data.append({
+                'name': row['name'],
+                'status': row['status'],
+                'priority': row['priority'],
+                'score': row['score'],
+                'detail': row['detail'],
+                'coefficient': row['coefficient'],
+                'quota': row['quota'],
+                'link': link,
+                'competitor': competitor
+            })
 
+        await set_user_data(tg_id=tg_id, new_user_data=new_user_data)
 
     except Exception as e:
         print(f"❌ Сталася помилка: {e}")

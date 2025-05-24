@@ -1,108 +1,160 @@
-# 📊 AbitAssistant
+# AbitAssistant_Bot
 
-**AbitAssistant** is a Telegram bot for Ukrainian high school graduates that automates the process of tracking applicants' applications to universities. The bot implements the technique described in [this video](https://www.youtube.com/watch?v=m5YfI8_2ONo) and significantly saves time, showing competitors in a convenient format.
-
-[![Donate](https://img.shields.io/badge/💸%20Підтримати%20проєкт-Monobank-orange)](https://send.monobank.ua/jar/23E3WYNesG)
+[![Donate](https://img.shields.io/badge/💸%20Support%20Project-Monobank-orange)](https://send.monobank.ua/jar/23E3WYNesG)
 [![Telegram Bot](https://img.shields.io/badge/🤖%20Telegram-Bot-blue?logo=telegram)](https://t.me/AbitAssistant_bot)
 [![GitHub](https://img.shields.io/badge/GitHub-OlexiyOdarchuk-black?logo=github)](https://github.com/OlexiyOdarchuk)
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Made in Ukraine](https://img.shields.io/badge/Made%20with%20❤️-in%20Ukraine-ffd700?style=flat&logo=flag&logoColor=blue)](https://t.me/NeShawyha)
 
----
-
-### 🌐 Мова / Language
+### 🌐 Language
 
 - [Українська](README.md)
 - [English](README_en.md)
 
----
+## 🧾 Description
 
-## 🛠️ Technologies
-
-- [Python](https://www.python.org/)
-- [Aiogram](https://github.com/aiogram/aiogram)
-- [Selenium](https://pypi.org/project/selenium/)
-- [SQLAlchemy](https://www.sqlalchemy.org/)
-- [SQLite](https://sqlite.org/index.html)
+**AbitAssistant_Bot** is a Telegram bot for Ukrainian high school graduates that automates tracking of university application status. It implements the method described in [this video](https://www.youtube.com/watch?v=m5YfI8_2ONo) and saves a lot of time by displaying competitor data in a clear and convenient way.
 
 ---
 
-### 🚀 Quick Start
+## 📚 Table of Contents
 
-1. Clone the repository
-   <code>git clone https://github.com/OlexiyOdarchuk/AbitAssistant_Bot.git</code>
-   Then go to the directory
-   <code>cd AbitAssistant_Bot</code>
-
-3. Install [uv](https://docs.astral.sh/uv/getting-started/installation/):
-
-5. Create a `config.py` file based on `config.example.py` and fill it with your data.
-
-6. Run the bot with the command:
-
-   <code>uv run bot.py</code>
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Dependencies](#dependencies)
+- [Configuration](#configuration)
+- [Author](#author)
+- [License](#license)
 
 ---
 
-### 🧠 Main Features
+## 🧠 Features
 
-- 📥 Parsing competitive lists from [vstup.osvita.ua](https://vstup.osvita.ua)
-- 📊 Automatic data processing and sorting
-- 🧾 Generating a list of competitors for a selected specialty
-- 🔗 Generating direct links to applicants in [abit.poisk](https://abit-poisk.org.ua/)
-- 📂 Saving all data in a local database
+- 📥 Parses admission lists from [vstup.osvita.ua](https://vstup.osvita.ua)
+- 📊 Automatically processes and sorts data
+- 🧾 Generates a list of competitors by selected specialty
+- 🔗 Generates direct links to applicants on [abit.poisk](https://abit-poisk.org.ua/)
+- 📂 Stores all data in a local database
 
 ---
 
-### 📂 Project Structure
+## 🛠 Installation
 
-The project has a clear structure: main files are at the root, all logic is in the `app/` folder. Below is the full description with links:
+> **Requirements:**
+> - Python 3.10+
+> - Docker + Docker Compose
+> - Telegram Bot Token
+
+### Steps:
+
+1. **Install Docker:**
+   - [Official instructions](https://docs.docker.com/get-docker/)
+
+2. **Clone the repository:**
+   ```bash
+   git clone https://github.com/OlexiyOdarchuk/AbitAssistant_Bot.git
+   cd AbitAssistant_Bot
+   ```
+
+3. **Configure settings:**
+   - Create `config.py` based on `config.example.py`
+   - Create `docker-compose.yml` based on `docker-compose.example.yml`
+
+4. **Start the project:**
+   ```bash
+   docker-compose up --build
+   ```
+
+---
+
+## 🚀 Usage
+
+Once started, the bot runs automatically in Telegram. You can add it to your contacts or group if you have the token.
+
+---
+
+## 📦 Dependencies
+
+- **Python** + **Aiogram** – bot logic
+- **Selenium** – web scraping
+- **SQLAlchemy** – ORM for database access
+- **PostgreSQL** – primary database
+- **Docker** – containerization
+
+---
+
+## ⚙️ Configuration
+
+Before running, copy and configure the following files:
+
+- `config.py` (based on `config.example.py`) — tokens, credentials, and settings.
+- `docker-compose.yml` (based on `docker-compose.example.yml`) — environment configuration.
+
+---
+
+## 👤 Author
+
+**Olexiy**
+Telegram: [@NeShawyha](https://t.me/NeShawyha)
+Gmail: [Email me](mailto:shawyhaf@gmail.com)
+
+---
+
+## 📄 License
+
+This project is licensed under the [GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.html).
+
+---
+
+## 🧡 Support the Project
+
+If this bot helps you, consider supporting the author:
+
+[💸 Support via Monobank](https://send.monobank.ua/jar/23E3WYNesG)
+
+---
+
+## 📂 Project Structure
+
+The project follows a clear structure: key files are in the root, and all logic is within the `app/` folder. Full structure:
 
 📦 project_root/<br>
-├── [bot.py](./bot.py) — main bot file<br>
-├── config.py — configuration file (created from [config.example.py](./config.example.py))<br>
+├── [bot.py](./bot.py) — main bot launcher<br>
+├── config.py — main config file (created from [config.example.py](./config.example.py))<br>
+├── docker-compose.yml — Docker service config (based on [docker-compose.example.yml](./docker-compose.example.yml))<br>
 ├── app/<br>
-│   ├── database/ — database interaction (SQLite + SQLAlchemy)<br>
-│   │   ├── db.sqlite3 — database (created during the /start command by the first user)<br>
-│   │   ├── [models.py](./app/database/models.py) — models for the database<br>
-│   │   ├── [requests.py](./app/database/requests.py) — database queries<br>
-│   ├── handlers/ — handling commands and user messages<br>
-│   │   ├── [\_\_init\_\_.py](./app/handlers/__init__.py) - package initialization<br>
+│   ├── database/ — PostgreSQL + SQLAlchemy DB interaction<br>
+│   │   ├── [models.py](./app/database/models.py) — DB models<br>
+│   │   ├── [requests.py](./app/database/requests.py) — DB queries<br>
+│   ├── handlers/ — user command and message handling<br>
+│   │   ├── [__init__.py](./app/handlers/__init__.py) — package initializer<br>
 │   │   ├── [admin.py](./app/handlers/admin.py) — admin commands<br>
-│   │   ├── [common.py](./app/handlers/common.py) — common commands<br>
+│   │   ├── [common.py](./app/handlers/common.py) — general commands<br>
 │   │   ├── [filtering.py](./app/handlers/filtering.py) — data filtering<br>
-│   │   ├── [support.py](./app/handlers/support.py) — feedback<br>
-│   │   ├── [viewing.py](./app/handlers/viewing.py) — viewing applicants<br>
-│   ├── services/ — main bot logic (parsing, analysis, generation)<br>
-│   │   ├── [applicants_len.py](./app/services/applicants_len.py) — counting applicants<br>
-│   │   ├── [parse_in_db.py](./app/services/parse_in_db.py) — parsing, analysis, and adding data to the DB<br>
-│   │   ├── [generate_link.py](./app/services/generate_link.py) — generating links<br>
+│   │   ├── [support.py](./app/handlers/support.py) — user feedback<br>
+│   │   ├── [viewing.py](./app/handlers/viewing.py) — view applicants<br>
+│   ├── services/ — core bot logic (parsing, analysis, generation)<br>
+│   │   ├── [applicants_len.py](./app/services/applicants_len.py) — applicant counter<br>
+│   │   ├── [parse_in_db.py](./app/services/parse_in_db.py) — parse, analyze, and store<br>
+│   │   ├── [generate_link.py](./app/services/generate_link.py) — link generation<br>
 │   │   ├── [mailing.py](./app/services/mailing.py) — mailings<br>
-│   │   ├── [support.py](./app/services/support.py) — handling feedback<br>
-│   ├── [keyboards.py](./app/keyboards.py) — buttons and keyboards<br>
+│   │   ├── [support.py](./app/services/support.py) — feedback handling<br>
+│   ├── [keyboards.py](./app/keyboards.py) — inline and reply keyboards<br>
 │   ├── [states.py](./app/states.py) — FSM states<br>
 
 ---
 
-### 🌐 Where the bot works?
+## 📡 Live Demo
 
-Most likely, the bot is running in Telegram.
+The bot is currently live and accessible on Telegram:
 
-🔗 [Run the bot](https://t.me/AbitAssistant_bot)
-
-If it is not working, it means the server is not yet connected or technical work is being carried out, please contact me via [Telegram](https://t.me/NeShawyha)
+👉 [@AbitAssistant_bot](https://t.me/AbitAssistant_bot)
 
 ---
 
-### 👤 Author
+## 🛠 A Note to Developers
 
-- GitHub: [OlexiyOdarchuk](https://github.com/OlexiyOdarchuk)
-- Telegram: [@NeShawyha](https://t.me/NeShawyha)
+This is an open-source project that welcomes contributions. If you want to improve it — **fork the repo**, make your changes, and create a pull request.
 
----
-
-### 📄 License
-
-This project is licensed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html).<br>
-
-Feel free to fork this repository, and maybe your contribution will become part of the next version of the project!
+> 💡 Your contribution might be included in the next official release!
