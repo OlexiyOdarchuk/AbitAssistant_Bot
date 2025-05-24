@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 from aiogram import Bot
 TELEGRAM_TOKEN = "YOUR_TELEGRAM_TOKEN" # API Token телеграм бота
 bot = Bot(token=TELEGRAM_TOKEN)
-DATABASE_URL = "postgresql+asyncpg://name:password@localhost:5432/abit_db" # URL бази данних, вставте своє ім'я, пароль і назву бази даних, але щоб співпадало з docker-compose.yml
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://name:password@localhost:5432/abit_db") # URL бази данних, вставте своє ім'я, пароль і назву бази даних, але щоб співпадало з docker-compose.yml
 ADMIN_ID = [1234567890, 6587654321, 1122334455] # ID ваших Адміністраторів
 user_score = {}
