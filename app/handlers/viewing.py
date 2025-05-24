@@ -15,7 +15,7 @@
 
 import re
 from aiogram import Router, F
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import StateFilter
 
@@ -40,25 +40,100 @@ async def back_to_stat(callback: CallbackQuery, state:FSMContext):
 async def view_applicant_all(callback: CallbackQuery, state: FSMContext):
     await state.set_state(st.view_all)
     keyboard = await kb.builder_applicant_all(callback.from_user.id, 1)
-    await callback.message.edit_text("Всі буджетні заяви на дану освітню програму", reply_markup=keyboard)
-
-@router.callback_query(st.view_all, F.data.startswith('applicant_page_'))
-async def change_page_all(callback: CallbackQuery, state: FSMContext):
-    page = int(callback.data.split('_')[-1])
-    keyboard = await kb.builder_applicant_all(callback.from_user.id, page)
-    await callback.message.edit_text("Натисніть на абітурієнта, щоб побачити повну інформацію\nНатисніть на кнопки керування, щоб пересуватися сторінками та на номер сторінки, щоб повернутися до попереднього меню", reply_markup=keyboard)
+    sent = await callback.message.edit_text("Всі буджетні заяви на дану освітню програму", reply_markup=keyboard)
+    await state.update_data(last_bot_message_id=sent.message_id)
 
 @router.callback_query(st.choice_list, F.data == "view_applicant_competitors")
 async def view_applicant_competitors(callback: CallbackQuery, state: FSMContext):
     await state.set_state(st.view_competitors)
     keyboard = await kb.builder_applicant_competitors(callback.from_user.id, user_score[callback.from_user.id], 1)
-    await callback.message.edit_text("Всі конкурентноспроможні заявки на дану освітню програму", reply_markup=keyboard)
+    sent = await callback.message.edit_text("Всі конкурентноспроможні заявки на дану освітню програму", reply_markup=keyboard)
+    await state.update_data(last_bot_message_id=sent.message_id)
+
+@router.callback_query(st.view_all, F.data.startswith('applicant_page_'))
+async def change_page_all(callback: CallbackQuery, state: FSMContext):
+    page = int(callback.data.split('_')[-1])
+    keyboard = await kb.builder_applicant_all(callback.from_user.id, page)
+    sent = await callback.message.edit_text(
+    "Натисніть на абітурієнта, щоб побачити повну інформацію\n"
+    "Натисніть на кнопки керування, або введіть бажану сторінку щоб пересуватися сторінками "
+    "Натисніть на номер сторінки, щоб повернутися до попереднього меню.",
+    reply_markup=keyboard
+    )
+    await state.update_data(last_bot_message_id=sent.message_id)
 
 @router.callback_query(st.view_competitors, F.data.startswith('competitors_page_'))
 async def change_page_competitors(callback: CallbackQuery, state: FSMContext):
     page = int(callback.data.split('_')[-1])
     keyboard = await kb.builder_applicant_competitors(callback.from_user.id, user_score[callback.from_user.id], page)
-    await callback.message.edit_text("Натисніть на абітурієнта, щоб побачити повну інформацію\nНатисніть на кнопки керування, щоб пересуватися сторінками та на номер сторінки, щоб повернутися до попереднього меню", reply_markup=keyboard)
+    sent = await callback.message.edit_text(
+    "Натисніть на абітурієнта, щоб побачити повну інформацію\n"
+    "Натисніть на кнопки керування, або введіть бажану сторінку щоб пересуватися сторінками "
+    "Натисніть на номер сторінки, щоб повернутися до попереднього меню.",
+    reply_markup=keyboard
+    )
+
+    await state.update_data(last_bot_message_id=sent.message_id)
+
+@router.message(st.view_all)
+async def change_page_at_message_all(message:Message, state: FSMContext):
+    await message.delete()
+
+    data = await state.get_data()
+    last_bot_message_id = data.get("last_bot_message_id")
+
+    if last_bot_message_id:
+        try:
+            await message.bot.delete_message(chat_id=message.chat.id, message_id=last_bot_message_id)
+        except Exception as e:
+            print(f"Не вдалося видалити старе повідомлення бота: {e}")
+
+    try:
+        page = int(message.text)
+    except ValueError:
+        await message.answer("Будь ласка, введіть номер сторінки числом.")
+        return
+
+    keyboard = await kb.builder_applicant_all(message.from_user.id, page)
+
+    sent = await message.answer(
+        "Натисніть на абітурієнта, щоб побачити повну інформацію\n"
+        "Натисніть на кнопки керування, або введіть бажану сторінку щоб пересуватися сторінками "
+        "та на номер сторінки, щоб повернутися до попереднього меню",
+        reply_markup=keyboard
+    )
+
+    await state.update_data(last_bot_message_id=sent.message_id)
+
+@router.message(st.view_competitors)
+async def change_page_at_message_competitors(message:Message, state: FSMContext):
+    await message.delete()
+
+    data = await state.get_data()
+    last_bot_message_id = data.get("last_bot_message_id")
+
+    if last_bot_message_id:
+        try:
+            await message.bot.delete_message(chat_id=message.chat.id, message_id=last_bot_message_id)
+        except Exception as e:
+            print(f"Не вдалося видалити старе повідомлення бота: {e}")
+
+    try:
+        page = int(message.text)
+    except ValueError:
+        await message.answer("Будь ласка, введіть номер сторінки числом.")
+        return
+
+    keyboard = await kb.builder_applicant_competitors(message.from_user.id, user_score[message.from_user.id], page)
+
+    sent = await message.answer(
+        "Натисніть на абітурієнта, щоб побачити повну інформацію\n"
+        "Натисніть на кнопки керування, або введіть бажану сторінку щоб пересуватися сторінками "
+        "та на номер сторінки, щоб повернутися до попереднього меню",
+        reply_markup=keyboard
+    )
+
+    await state.update_data(last_bot_message_id=sent.message_id)
 
 @router.callback_query(StateFilter(st.view_all, st.view_competitors), F.data.startswith('applicant_'))
 async def all_info(callback: CallbackQuery):
