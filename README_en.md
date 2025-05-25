@@ -70,7 +70,7 @@
 
 ## 🚀 Usage
 
-Once started, the bot runs automatically in Telegram. You can add it to your contacts or group if you have the token.
+Once started, the bot runs automatically in Telegram.
 
 ---
 
@@ -95,7 +95,7 @@ Before running, copy and configure the following files:
 
 ## 👤 Author
 
-**Olexiy**
+**Oleksii**
 Telegram: [@NeShawyha](https://t.me/NeShawyha)
 Gmail: [Email me](mailto:shawyhaf@gmail.com)
 
@@ -145,7 +145,7 @@ The project follows a clear structure: key files are in the root, and all logic 
 
 ---
 
-## 📡 Live Demo
+## 📡 Where find?
 
 The bot is currently live and accessible on Telegram:
 

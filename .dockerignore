@@ -7,13 +7,7 @@ wheels/
 *.egg-info
 
 # Unnecessary files
-.git
-.gitignore
 test.py
-README.md
-README_en.md
-uv.lock
-LICENSE
 config.example.py
 docker-compose.example.yml
 

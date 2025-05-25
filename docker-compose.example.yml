@@ -5,7 +5,7 @@ services:
     restart: always
     # Всі данні в environment поміняйте на свої, але щоб співпадало з config.py
     environment:
-      POSTGRES_DB: abit_db
+      POSTGRES_DB: name_db
       POSTGRES_USER: name
       POSTGRES_PASSWORD: password
     volumes:
@@ -20,7 +20,7 @@ services:
     depends_on:
       - db
     environment:
-      DATABASE_URL: postgresql+asyncpg://name:password@db:5432/abit_db # Тут поміняти назви name, password і abit_db
+      DATABASE_URL: postgresql+asyncpg://name:password@db:5432/name_db # Тут поміняти назви name, password і name_db
     command: python bot.py
 
 volumes:

@@ -47,9 +47,9 @@ async def get_bal(message: Message, state: FSMContext):
 @router.message(st.get_link, F.text)
 async def get_link(message: Message, state: FSMContext):
     try:
-        if message.text.startswith('https://vstup.osvita.ua'):
+        if message.text.startswith('https://vstup.osvita.ua'): #НЕ ЗАБУДЬ СЮДИ ВПИСАТИ y2025!!!!
             await state.set_state(st.choice_list)
-            await message.answer("Сканування почалося. Це займе до 3 хвилин...", reply_markup=kb.remove_keyboard)
+            await message.answer("Сканування почалося.\nЦе займе до 3 хвилин...\n\nP.S. Все одно швидше, ніж вручну😄", reply_markup=kb.remove_keyboard)
             await parser(message.text, message.from_user.id)
             await message.answer("Готово!", reply_markup=kb.return_back)
             how_all_applicant = await applicantlen.all_applicant_len(message.from_user.id)
@@ -59,6 +59,6 @@ async def get_link(message: Message, state: FSMContext):
 
 
         else:
-            await message.answer("Посилання повинно починатися з 'https://vstup.osvita.ua' та бути коректним")
+            await message.answer("Посилання повинно починатися з 'https://vstup.osvita.ua/y2025/' та бути коректним")
     except ValueError:
         await message.answer("Будь ласка, введіть посилання на освітню програму")

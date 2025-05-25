@@ -32,17 +32,17 @@ async def get_users() -> List[int]:
 
 async def set_user_data(
     tg_id: int,
-    new_user_data: List[dict]  # кожен dict містить дані абітурієнта
+    new_user_data: List[dict]  # кожен dict містить дані абітурієнтів
 ) -> None:
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
         if not user:
             raise Exception("User not found")
 
-        # Видаляємо всі існуючі записи user_data для цього користувача
+        # Видаляє всі існуючі записи user_data для цього користувача
         await session.execute(delete(UserData).where(UserData.user_tg_id == tg_id))
 
-        # Додаємо всі нові записи
+        # Додає всі нові записи
         user_data_objects = [
             UserData(
                 user_tg_id=tg_id,
