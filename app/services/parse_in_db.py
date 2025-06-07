@@ -41,21 +41,35 @@ def clean_score(raw_score: str) -> float:
         return 0.0
 
 
-def is_competitor(score: float, priority: int, quota: str, tg_id: int) -> bool:
-    """
-    Визначає, чи є абітурієнт конкурентом:
-    - Якщо є квота - перевіряє тільки пріоритет.
-    - Якщо квоти немає - перевіряє бали проти балу користувача, а потім пріоритет.
-    """
-    base_score = user_score.get(tg_id, 0.0)
-    has_quota = bool(quota and quota.strip())
+def has_quota_or_coefficient(quota: str, coefficient: str) -> bool:
+    """Перевірка на наявність квоти або коефіцієнту"""
+    quota_codes = {'КВ1', 'КВ2', 'ПО', 'СБ'}
+    coefficient_codes = {'РК', 'ГК', 'ОУ'}
 
-    if has_quota:
+    quota_set = set(q.strip().upper() for q in (quota or '').split(',') if q.strip())
+    coefficient_set = set(c.strip().upper() for c in (coefficient or '').split(',') if c.strip())
+
+    return bool(quota_codes.intersection(quota_set)) or bool(coefficient_codes.intersection(coefficient_set))
+
+
+def is_valid_status(status: str) -> bool:
+    """Статуси, які виключаються (враховуючи всі варіанти)"""
+
+    excluded_statuses = [
+        'відмова', 'скасовано', 'затримано', 'відхилено', 'відмовлено', 'скасовано (втрата пріор.)'
+    ]
+    status_lower = status.lower()
+    return not any(excluded in status_lower for excluded in excluded_statuses)
+
+
+def is_competitor(score: float, priority: int, quota: str, coefficient: str, tg_id: int) -> bool:
+    base_score = user_score.get(tg_id, 0.0)
+    has_quota_coeff = has_quota_or_coefficient(quota, coefficient)
+
+    if has_quota_coeff:
         return priority <= 3
-    # без квоти
-    if score > base_score:
-        return priority <= 3
-    return False
+    else:
+        return score > base_score and priority <= 3
 
 
 async def fetch_driver(url: str, chrome_options: Options):
@@ -129,7 +143,7 @@ async def parser(url: str, tg_id: int):
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--disable-software-rasterizer")
     chrome_options.add_argument("--remote-debugging-port=9222")
-    chrome_options.add_argument("--loglevel=3")
+    chrome_options.add_argument("--log-level=3")
 
     driver = await fetch_driver(url, chrome_options)
     try:
@@ -137,21 +151,24 @@ async def parser(url: str, tg_id: int):
         await click_all_details(driver)
         rows = await parse_rows(driver)
 
-        excluded_statuses = ('Відхилено', 'Відмовлено', 'Скасовано')
-
         new_user_data = []
 
-        for idx, row in enumerate(rows, start=1):
+        for row in rows:
+            # Відкидаємо контрактні заявки (тип 'К')
             if row['app_type'].upper() == 'К':
                 continue
 
-            if any(bad_word in row['status'].lower() for bad_word in excluded_statuses):
+            # Фільтрація по статусу
+            if not is_valid_status(row['status']):
                 continue
 
             competitor = is_competitor(
-                row['score'], row['priority'], row['quota'], tg_id
+                row['score'], row['priority'], row['quota'], row['coefficient'], tg_id
             )
             link = await generate_link(row['name'])
+
+            coeff = row['coefficient'] if row['coefficient'] else '-'
+            quota = row['quota'] if row['quota'] else '-'
 
             new_user_data.append({
                 'name': row['name'],
@@ -159,8 +176,8 @@ async def parser(url: str, tg_id: int):
                 'priority': row['priority'],
                 'score': row['score'],
                 'detail': row['detail'],
-                'coefficient': row['coefficient'],
-                'quota': row['quota'],
+                'coefficient': coeff,
+                'quota': quota,
                 'link': link,
                 'competitor': competitor
             })
