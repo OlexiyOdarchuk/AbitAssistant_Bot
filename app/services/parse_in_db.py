@@ -117,7 +117,7 @@ async def parse_rows(driver) -> list[dict]:
         try:
             priority = int(cells[3])
         except ValueError:
-            priority = 99
+            priority = 0
 
         results.append({
             'name': cells[1],

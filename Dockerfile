@@ -2,7 +2,6 @@ FROM python:3.13.3-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    git \
     vim \
     fish \
     libsqlite3-dev \
@@ -29,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Створюємо ізольованого користувача (безпечніше)
-#RUN useradd -m botuser
+RUN useradd -m botuser
 
 WORKDIR /AbitAssistant_Bot
 
@@ -38,6 +37,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-#USER botuser
+USER botuser
 
 CMD ["python", "bot.py"]

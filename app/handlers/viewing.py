@@ -33,7 +33,7 @@ async def back_to_stat(callback: CallbackQuery, state:FSMContext):
     await state.set_state(st.choice_list)
     how_all_applicant = await applicantlen.all_applicant_len(callback.from_user.id)
     how_competitor_applicant = await applicantlen.competitors_applicant_len(callback.from_user.id)
-    await callback.message.answer(f"Повернено!\nНа цю освітню програму наразі подано {how_all_applicant}, але з усіх цих людей конкуренцію вам складають тільки {how_competitor_applicant}\
+    await callback.message.answer(f"Повернено!\nНа цю освітню програму наразі активно {how_all_applicant} заяв, але з усіх цих людей конкуренцію вам складають тільки {how_competitor_applicant}\
 \nМожете дізнатися більше, використовуючи кнопки нище, або поверніться до головного меню, щоб перевірити інші освітні програми!", reply_markup=kb.applicant_stat)
 
 @router.callback_query(st.choice_list, F.data == "view_applicant_all")
