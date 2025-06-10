@@ -54,7 +54,7 @@ async def get_link(message: Message, state: FSMContext):
             await message.answer("Готово!", reply_markup=kb.return_back)
             how_all_applicant = await applicantlen.all_applicant_len(message.from_user.id)
             how_competitor_applicant = await applicantlen.competitors_applicant_len(message.from_user.id)
-            await message.answer(f"На цю освітню програму наразі подано {how_all_applicant} бюджетних заявок, але з усіх цих людей конкуренцію вам складають тільки {how_competitor_applicant}\
+            await message.answer(f"На цю освітню програму наразі активно {how_all_applicant} бюджетних заявок, але з усіх цих людей конкуренцію вам складають тільки {how_competitor_applicant}\
 \nМожете дізнатися більше, використовуючи кнопки нище, або поверніться до головного меню, щоб перевірити інші освітні програми!", reply_markup=kb.applicant_stat)
 
 
