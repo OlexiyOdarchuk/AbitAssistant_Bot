@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import asyncio
 from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
@@ -22,10 +21,9 @@ from app.services.parse_in_db import parser
 import app.keyboards as kb
 import app.services.applicants_len as applicantlen
 from app.states import States as st
-from config import user_score
+from config import MULTITASK, user_score
 
 router = Router()
-parser_semaphore = asyncio.Semaphore(2)
 
 @router.message(F.text == "📝Почати відсіювання!📝")
 async def start_filter(message: Message, state: FSMContext):
@@ -57,7 +55,7 @@ async def get_link(message: Message, state: FSMContext):
             )
 
             # Очікуємо, доки звільниться місце у семафорі
-            async with parser_semaphore:
+            async with MULTITASK:
                 try:
                     await parser(message.text, message.from_user.id)
                 except Exception as e:
