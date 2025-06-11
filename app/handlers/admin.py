@@ -19,6 +19,7 @@ from aiogram.fsm.context import FSMContext
 
 import app.services.mailing as mail
 from app.states import States as st
+import app.services.stats as stats
 
 router = Router()
 
@@ -35,3 +36,7 @@ async def get_mailing_text(message: Message, state: FSMContext):
 @router.message(st.init_mailing, F.text == "Відправити розсилку📣")
 async def init(message: Message, state: FSMContext):
     await mail.init(message, state)
+
+@router.message(F.text == "📊Статистика!")
+async def statistics(message: Message):
+    await message.answer(await stats.admin_statistics())

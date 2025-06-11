@@ -30,7 +30,7 @@ admin_main = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="📝Почати відсіювання!📝")],
         [KeyboardButton(text="💸Донат💸"), KeyboardButton(text="📑Про нас📑")],
-        [KeyboardButton(text="📣Розсилка!")],
+        [KeyboardButton(text="📣Розсилка!"), KeyboardButton(text="📊Статистика!")],
     ],
     resize_keyboard=True,
 )

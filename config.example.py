@@ -28,4 +28,3 @@ ADMIN_ID = [1234567890, 6587654321, 1122334455] # ID ваших Адмініст
 MULTITASK = asyncio.Semaphore(2)
 
 bot = Bot(token=TELEGRAM_TOKEN)
-user_score = {}

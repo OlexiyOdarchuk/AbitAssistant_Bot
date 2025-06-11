@@ -19,9 +19,9 @@ from aiogram.fsm.context import FSMContext
 
 from app.services.parse_in_db import parser
 import app.keyboards as kb
-import app.services.applicants_len as applicantlen
+import app.services.stats as stats
 from app.states import States as st
-from config import MULTITASK, user_score
+from config import MULTITASK
 
 router = Router()
 
@@ -36,7 +36,7 @@ async def start_filter(message: Message, state: FSMContext):
 async def get_bal(message: Message, state: FSMContext):
     try:
         if 100.000 <= float(message.text) <= 200.000:
-            user_score[message.from_user.id] = float(message.text)
+            stats.user_score[message.from_user.id] = float(message.text)
             await state.set_state(st.get_link)
             await message.answer("Супер! Тепер відправте посилання на освітню програму з сайту vstup.osvita, наприклад:\n'https://vstup.osvita.ua/y2024/r27/41/1352329/'")
         else:
@@ -66,8 +66,8 @@ async def get_link(message: Message, state: FSMContext):
                     return
 
             await message.answer("Готово!", reply_markup=kb.return_back)
-            how_all_applicant = await applicantlen.all_applicant_len(message.from_user.id)
-            how_competitor_applicant = await applicantlen.competitors_applicant_len(message.from_user.id)
+            how_all_applicant = await stats.all_applicant_len(message.from_user.id)
+            how_competitor_applicant = await stats.competitors_applicant_len(message.from_user.id)
             await message.answer(f"На цю освітню програму наразі активно {how_all_applicant} бюджетних заявок, але з усіх цих людей конкуренцію вам складають тільки {how_competitor_applicant}\
 \nМожете дізнатися більше, використовуючи кнопки нище, або поверніться до головного меню, щоб перевірити інші освітні програми!", reply_markup=kb.applicant_stat)
 

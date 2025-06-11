@@ -23,9 +23,9 @@ from bs4 import BeautifulSoup
 import tempfile
 
 from app.services.generate_link import generate_link
-from app.database.requests import clear_user_data, set_user_data
-from config import user_score
-
+import app.database.requests as rq
+import app.services.stats as stats
+from config import ADMIN_ID
 
 def clean_score(raw_score: str) -> float:
     """
@@ -64,7 +64,7 @@ def is_valid_status(status: str) -> bool:
 
 
 def is_competitor(score: float, priority: int, quota: str, coefficient: str, tg_id: int) -> bool:
-    base_score = user_score.get(tg_id, 0.0)
+    base_score = stats.user_score.get(tg_id, 0.0)
     has_quota_coeff = has_quota_or_coefficient(quota, coefficient)
 
     if has_quota_coeff:
@@ -137,6 +137,9 @@ async def parse_rows(driver) -> list[dict]:
 
 async def parser(url: str, tg_id: int):
     """Працює з сторінкою, обробляє дані і зберігає їх у базі даних."""
+    if tg_id not in ADMIN_ID:
+        await rq.update_user_activates(tg_id)
+
     user_data_dir = tempfile.mkdtemp(prefix=f"chromium_{tg_id}")
     chrome_options = Options()
     chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
@@ -150,7 +153,7 @@ async def parser(url: str, tg_id: int):
 
     driver = await fetch_driver(url, chrome_options)
     try:
-        await clear_user_data(tg_id)
+        await rq.clear_user_data(tg_id)
         await click_all_details(driver)
         rows = await parse_rows(driver)
 
@@ -184,8 +187,9 @@ async def parser(url: str, tg_id: int):
                 'link': link,
                 'competitor': competitor
             })
-
-        await set_user_data(tg_id=tg_id, new_user_data=new_user_data)
+        if tg_id not in ADMIN_ID:
+            await rq.update_user_right_activates(tg_id)
+        await rq.set_user_data(tg_id=tg_id, new_user_data=new_user_data)
 
     except Exception as e:
         print(f"❌ Сталася помилка: {e}")

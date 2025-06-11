@@ -21,9 +21,8 @@ from aiogram.filters import StateFilter
 
 import app.keyboards as kb
 import app.database.requests as rq
-import app.services.applicants_len as applicantlen
+import app.services.stats as stats
 from app.states import States as st
-from config import user_score
 
 router = Router()
 
@@ -31,8 +30,8 @@ router = Router()
 async def back_to_stat(callback: CallbackQuery, state:FSMContext):
     await callback.message.delete()
     await state.set_state(st.choice_list)
-    how_all_applicant = await applicantlen.all_applicant_len(callback.from_user.id)
-    how_competitor_applicant = await applicantlen.competitors_applicant_len(callback.from_user.id)
+    how_all_applicant = await stats.all_applicant_len(callback.from_user.id)
+    how_competitor_applicant = await stats.competitors_applicant_len(callback.from_user.id)
     await callback.message.answer(f"Повернено!\nНа цю освітню програму наразі активно {how_all_applicant} заяв, але з усіх цих людей конкуренцію вам складають тільки {how_competitor_applicant}\
 \nМожете дізнатися більше, використовуючи кнопки нище, або поверніться до головного меню, щоб перевірити інші освітні програми!", reply_markup=kb.applicant_stat)
 
@@ -46,7 +45,7 @@ async def view_applicant_all(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(st.choice_list, F.data == "view_applicant_competitors")
 async def view_applicant_competitors(callback: CallbackQuery, state: FSMContext):
     await state.set_state(st.view_competitors)
-    keyboard = await kb.builder_applicant_competitors(callback.from_user.id, user_score[callback.from_user.id], 1)
+    keyboard = await kb.builder_applicant_competitors(callback.from_user.id, stats.user_score[callback.from_user.id], 1)
     sent = await callback.message.edit_text("Всі конкурентноспроможні заявки на дану освітню програму", reply_markup=keyboard)
     await state.update_data(last_bot_message_id=sent.message_id)
 
@@ -65,7 +64,7 @@ async def change_page_all(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(st.view_competitors, F.data.startswith('competitors_page_'))
 async def change_page_competitors(callback: CallbackQuery, state: FSMContext):
     page = int(callback.data.split('_')[-1])
-    keyboard = await kb.builder_applicant_competitors(callback.from_user.id, user_score[callback.from_user.id], page)
+    keyboard = await kb.builder_applicant_competitors(callback.from_user.id, stats.user_score[callback.from_user.id], page)
     sent = await callback.message.edit_text(
     "Натисніть на абітурієнта, щоб побачити повну інформацію\n"
     "Натисніть на кнопки керування, або введіть бажану сторінку щоб пересуватися сторінками "
@@ -124,7 +123,7 @@ async def change_page_at_message_competitors(message:Message, state: FSMContext)
         await message.answer("Будь ласка, введіть номер сторінки числом.")
         return
 
-    keyboard = await kb.builder_applicant_competitors(message.from_user.id, user_score[message.from_user.id], page)
+    keyboard = await kb.builder_applicant_competitors(message.from_user.id, stats.user_score[message.from_user.id], page)
 
     sent = await message.answer(
         "Натисніть на абітурієнта, щоб побачити повну інформацію\n"

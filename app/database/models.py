@@ -33,6 +33,8 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     user_data: Mapped[List["UserData"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    activates: Mapped[int] = mapped_column(Integer, default=0)
+    right_activates: Mapped[int] = mapped_column(Integer, default=0)
 
 class UserData(Base):
     __tablename__ = "user_data"
