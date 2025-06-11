@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import asyncio
 from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
@@ -24,6 +25,7 @@ from app.states import States as st
 from config import user_score
 
 router = Router()
+parser_semaphore = asyncio.Semaphore(2)
 
 @router.message(F.text == "📝Почати відсіювання!📝")
 async def start_filter(message: Message, state: FSMContext):
@@ -49,8 +51,22 @@ async def get_link(message: Message, state: FSMContext):
     try:
         if message.text.startswith('https://vstup.osvita.ua'): #НЕ ЗАБУДЬ СЮДИ ВПИСАТИ y2025!!!!
             await state.set_state(st.choice_list)
-            await message.answer("Сканування почалося.\nЦе займе до 3 хвилин...\n\nP.S. Все одно швидше, ніж вручну😄", reply_markup=kb.remove_keyboard)
-            await parser(message.text, message.from_user.id)
+            await message.answer(
+                "Сканування почалося.\nЦе займе до 3 хвилин...\n\nP.S. Все одно швидше, ніж вручну😄",
+                reply_markup=kb.remove_keyboard
+            )
+
+            # Очікуємо, доки звільниться місце у семафорі
+            async with parser_semaphore:
+                try:
+                    await parser(message.text, message.from_user.id)
+                except Exception as e:
+                    await message.answer(
+                        "Упс.. надто багато обробок, система не витримує, спробуйте ще раз 🙂",
+                        reply_markup=kb.user_main
+                    )
+                    return
+
             await message.answer("Готово!", reply_markup=kb.return_back)
             how_all_applicant = await applicantlen.all_applicant_len(message.from_user.id)
             how_competitor_applicant = await applicantlen.competitors_applicant_len(message.from_user.id)

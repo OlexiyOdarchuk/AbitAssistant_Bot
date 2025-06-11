@@ -21,7 +21,6 @@ services:
       - db
     environment:
       DATABASE_URL: postgresql+asyncpg://name:password@db:5432/name_db # Тут поміняти назви name, password і name_db
-    command: python bot.py
 
 volumes:
   pgdata:

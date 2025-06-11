@@ -25,6 +25,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcups2 \
     libdrm2 \
     libxinerama1 \
+    chromium \
+    chromium-driver \
+    dbus \
+    libxshmfence1 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Створюємо ізольованого користувача (безпечніше)
