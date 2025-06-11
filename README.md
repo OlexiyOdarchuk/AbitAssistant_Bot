@@ -135,7 +135,7 @@ Gmail: [Написати лист](mailto:shawyhaf@gmail.com)
 │   │   ├── [support.py](./app/handlers/support.py) — зворотній зв'язок<br>
 │   │   ├── [viewing.py](./app/handlers/viewing.py) — перегляд абітурієнтів<br>
 │   ├── services/ — основна логіка бота (парсинг, аналіз, генерація)<br>
-│   │   ├── [applicants_len.py](./app/services/applicants_len.py) — підрахунок абітурієнтів<br>
+│   │   ├── [stats.py](./app/services/stats.py) — збір статистики<br>
 │   │   ├── [parse_in_db.py](./app/services/parse_in_db.py) — парсинг, аналіз і додавання даних до БД<br>
 │   │   ├── [generate_link.py](./app/services/generate_link.py) — генерування посилань<br>
 │   │   ├── [mailing.py](./app/services/mailing.py) — розсилки<br>
