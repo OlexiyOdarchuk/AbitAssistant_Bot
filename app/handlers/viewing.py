@@ -26,20 +26,30 @@ from app.states import States as st
 
 router = Router()
 
+change_page_text = "Натисніть на абітурієнта, щоб побачити повну інформацію\n"
+"Натисніть на кнопки керування, або введіть бажану сторінку щоб пересуватися сторінками "
+"Натисніть на номер сторінки, щоб повернутися до попереднього меню."
+
 @router.callback_query(StateFilter(st.view_all, st.view_competitors), F.data == "applicant_back_to_stat")
 async def back_to_stat(callback: CallbackQuery, state:FSMContext):
     await callback.message.delete()
     await state.set_state(st.choice_list)
     how_all_applicant = await stats.all_applicant_len(callback.from_user.id)
     how_competitor_applicant = await stats.competitors_applicant_len(callback.from_user.id)
-    await callback.message.answer(f"Повернено!\nНа цю освітню програму наразі активно {how_all_applicant} заяв, але з усіх цих людей конкуренцію вам складають тільки {how_competitor_applicant}\
-\nМожете дізнатися більше, використовуючи кнопки нище, або поверніться до головного меню, щоб перевірити інші освітні програми!", reply_markup=kb.applicant_stat)
+    await callback.answer(
+        f"""🔙 Повернення до статистики!
+На цю освітню програму наразі подано {how_all_applicant} бюджетних заявок.
+Але лише {how_competitor_applicant} з них — це ваші справжні конкуренти 😉
 
+📊 Використовуйте кнопки нижче, щоб дізнатись більше, або повертайтесь у головне меню для нової перевірки!
+    """,
+        reply_markup=kb.applicant_stat
+    )
 @router.callback_query(st.choice_list, F.data == "view_applicant_all")
 async def view_applicant_all(callback: CallbackQuery, state: FSMContext):
     await state.set_state(st.view_all)
     keyboard = await kb.builder_applicant_all(callback.from_user.id, 1)
-    sent = await callback.message.edit_text("Всі буджетні заяви на дану освітню програму", reply_markup=keyboard)
+    sent = await callback.message.edit_text("Всі бюджетні заяви на дану освітню програму", reply_markup=keyboard)
     await state.update_data(last_bot_message_id=sent.message_id)
 
 @router.callback_query(st.choice_list, F.data == "view_applicant_competitors")
@@ -54,9 +64,7 @@ async def change_page_all(callback: CallbackQuery, state: FSMContext):
     page = int(callback.data.split('_')[-1])
     keyboard = await kb.builder_applicant_all(callback.from_user.id, page)
     sent = await callback.message.edit_text(
-    "Натисніть на абітурієнта, щоб побачити повну інформацію\n"
-    "Натисніть на кнопки керування, або введіть бажану сторінку щоб пересуватися сторінками "
-    "Натисніть на номер сторінки, щоб повернутися до попереднього меню.",
+    change_page_text,
     reply_markup=keyboard
     )
     await state.update_data(last_bot_message_id=sent.message_id)
@@ -66,9 +74,7 @@ async def change_page_competitors(callback: CallbackQuery, state: FSMContext):
     page = int(callback.data.split('_')[-1])
     keyboard = await kb.builder_applicant_competitors(callback.from_user.id, stats.user_score[callback.from_user.id], page)
     sent = await callback.message.edit_text(
-    "Натисніть на абітурієнта, щоб побачити повну інформацію\n"
-    "Натисніть на кнопки керування, або введіть бажану сторінку щоб пересуватися сторінками "
-    "Натисніть на номер сторінки, щоб повернутися до попереднього меню.",
+    change_page_text,
     reply_markup=keyboard
     )
 
@@ -96,9 +102,7 @@ async def change_page_at_message_all(message:Message, state: FSMContext):
     keyboard = await kb.builder_applicant_all(message.from_user.id, page)
 
     sent = await message.answer(
-        "Натисніть на абітурієнта, щоб побачити повну інформацію\n"
-        "Натисніть на кнопки керування, або введіть бажану сторінку щоб пересуватися сторінками "
-        "та на номер сторінки, щоб повернутися до попереднього меню",
+        change_page_text,
         reply_markup=keyboard
     )
 
@@ -126,9 +130,7 @@ async def change_page_at_message_competitors(message:Message, state: FSMContext)
     keyboard = await kb.builder_applicant_competitors(message.from_user.id, stats.user_score[message.from_user.id], page)
 
     sent = await message.answer(
-        "Натисніть на абітурієнта, щоб побачити повну інформацію\n"
-        "Натисніть на кнопки керування, або введіть бажану сторінку щоб пересуватися сторінками "
-        "та на номер сторінки, щоб повернутися до попереднього меню",
+        change_page_text,
         reply_markup=keyboard
     )
 
@@ -148,19 +150,19 @@ async def all_info(callback: CallbackQuery):
             if applicant.detail:
                 formatted_detail = re.sub(r'([А-ЯІЇЄA-Zа-яіїєҐґ\s]+?)(\d{2,3})(?=[А-ЯІЇЄA-Z])', r'\1: \2\n', applicant.detail).strip() # ([А-ЯІЇЄA-Zа-яіїєҐґ\s]+?) - ловить назву, (\d{2,3}) - ловить число, (?=[А-ЯІЇЄA-Z]) - після числа повинно бути велика літера
             await callback.message.answer(
-f"""Повна інформація про абітурієнта:
+f"""📄 Повна інформація про абітурієнта:
 
-ПІП: {applicant.name}
-Статус заяви: {applicant.status}
-Пріоритет на освітню програму: {applicant.priority}
-Коефіцієнтний бал на спеціальність: {applicant.score if applicant.score else '-'}
+👤 ПІП: {applicant.name}
+📄 Статус заяви: {applicant.status}
+🎯 Пріоритет на освітню програму: {applicant.priority}
+📈 Коефіцієнтний бал на спеціальність: {applicant.score if applicant.score else '-'}
 
-Бали НМТ:
+📚 Бали НМТ:
 {formatted_detail}
 
-Коефіцієнт: {display_coefficient}
-Квота: {display_quota}
-Конкурентність: {'Конкурент' if applicant.competitor else 'Не конкурент'}
-Посилання на абіт-пошук:
+⚖️ Коефіцієнт: {display_coefficient}
+🏷️ Квота: {display_quota}
+🔍 Конкурентність: {'✅ Конкурент' if applicant.competitor else '❌ Не конкурент'}
+🔗 Посилання на абіт-пошук:
 {applicant.link if applicant.link else '-'}
 """)

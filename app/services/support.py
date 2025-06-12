@@ -53,7 +53,7 @@ async def send_all_to_admin(message: Message, state: FSMContext):
     for admin in ADMIN_ID:
         await bot.send_message(
             chat_id=admin,
-            text=f"📩 Нове звернення від {message.from_user.full_name} (Link: tg://user?id={message.from_user.id})",
+            text=f"📩 Нове звернення від {message.from_user.full_name}\nLink: tg://user?id={message.from_user.id}"
         )
 
     for msg in messages:
@@ -94,6 +94,6 @@ async def forward(message: Message, state: FSMContext):
         for admin in ADMIN_ID:
             await bot.send_message(
                 chat_id=admin,
-                text=f"⚠️ Повідомлення від користувача {message.from_user.full_name} (Link: tg://user?id={message.from_user.id}):"
+                text=f"⚠️ Повідомлення від користувача {message.from_user.full_name}\nLink: tg://user?id={message.from_user.id}:"
             )
             await message.send_copy(chat_id=admin)

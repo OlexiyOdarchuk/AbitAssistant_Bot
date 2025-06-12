@@ -14,7 +14,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import app.database.requests as rq
-from email.policy import default
 
 user_score = {}
 
@@ -41,9 +40,9 @@ async def admin_statistics() -> str:
     failed_activates = total_activates - total_right_activates
 
     return f"""
-Статистика АбитAssistant_bot:
+📊 Статистика AbitAssistant_bot:
 
-Кількість користувачів: {user_count}
-За весь час було проведено {total_activates} активацій
-{failed_activates} з них - закінчилися помилкою
-Найактивніший користувач: tg://user?id={top_user_id} з {top_user_activates} активаціями"""
+👥 Кількість користувачів: {user_count}
+⚙️ Всього активацій: {total_activates}
+❌ З них завершилися з помилкою: {failed_activates}
+🏆 Найактивніший користувач: tg://user?id={top_user_id} — {top_user_activates} активацій"""

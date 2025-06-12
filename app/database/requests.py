@@ -1,4 +1,3 @@
-from threading import ExceptHookArgs, get_ident
 # Copyright (c) 2025 iShawyha. All rights reserved.
 #
 # This program is free software: you can redistribute it and/or modify
