@@ -58,7 +58,7 @@ async def get_link(message: Message, state: FSMContext):
             async with MULTITASK:
                 try:
                     await parser(message.text, message.from_user.id)
-                except Exception as e:
+                except Exception:
                     await message.answer(
                         "Упс.. надто багато обробок, система не витримує, спробуйте ще раз 🙂",
                         reply_markup=kb.user_main

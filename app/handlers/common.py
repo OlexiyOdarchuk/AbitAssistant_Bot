@@ -21,7 +21,7 @@ from aiogram.fsm.context import FSMContext
 
 import app.database.requests as rq
 import app.keyboards as kb
-from config import ADMIN_ID
+from config import ADMIN_ID, bot
 
 router = Router()
 
@@ -33,7 +33,14 @@ async def start(message: Message):
             "О, ку!\nНа менюшку, може вона тобі треба)", reply_markup=kb.admin_main
         )
     else:
-        await rq.set_user(message.from_user.id)
+
+        for admin in ADMIN_ID:
+            await bot.send_message(
+                chat_id=admin,
+                text=f"Зареєстровано нового користувача: {message.from_user.full_name}\nLink: tg://user?id={message.from_user.id}:"
+            )
+            await message.send_copy(chat_id=admin)
+
         await message.answer("""Вітаю в боті для перевірки конкурекції! 👋
 
 Тут ми реалізували фільтрацію конкурентів для абітурієнтів(тобто майбуніх студентів😋),
