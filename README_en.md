@@ -135,7 +135,7 @@ The project follows a clear structure: key files are in the root, and all logic 
 │   │   ├── [support.py](./app/handlers/support.py) — user feedback<br>
 │   │   ├── [viewing.py](./app/handlers/viewing.py) — view applicants<br>
 │   ├── services/ — core bot logic (parsing, analysis, generation)<br>
-│   │   ├── [applicants_len.py](./app/services/applicants_len.py) — applicant counter<br>
+│   │   ├── [stats.py](./app/services/stats.py) — get statistics<br>
 │   │   ├── [parse_in_db.py](./app/services/parse_in_db.py) — parse, analyze, and store<br>
 │   │   ├── [generate_link.py](./app/services/generate_link.py) — link generation<br>
 │   │   ├── [mailing.py](./app/services/mailing.py) — mailings<br>
