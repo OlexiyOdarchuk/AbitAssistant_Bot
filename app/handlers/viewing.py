@@ -25,7 +25,6 @@ import app.services.stats as stats
 from app.states import States as st
 
 router = Router()
-
 change_page_text = "Натисніть на абітурієнта, щоб побачити повну інформацію\n"
 "Натисніть на кнопки керування, або введіть бажану сторінку щоб пересуватися сторінками "
 "Натисніть на номер сторінки, щоб повернутися до попереднього меню."
@@ -36,7 +35,7 @@ async def back_to_stat(callback: CallbackQuery, state:FSMContext):
     await state.set_state(st.choice_list)
     how_all_applicant = await stats.all_applicant_len(callback.from_user.id)
     how_competitor_applicant = await stats.competitors_applicant_len(callback.from_user.id)
-    await callback.answer(
+    await callback.message.answer(
         f"""🔙 Повернення до статистики!
 На цю освітню програму наразі подано {how_all_applicant} бюджетних заявок.
 Але лише {how_competitor_applicant} з них — це ваші справжні конкуренти 😉
@@ -64,7 +63,7 @@ async def change_page_all(callback: CallbackQuery, state: FSMContext):
     page = int(callback.data.split('_')[-1])
     keyboard = await kb.builder_applicant_all(callback.from_user.id, page)
     sent = await callback.message.edit_text(
-    change_page_text,
+        change_page_text,
     reply_markup=keyboard
     )
     await state.update_data(last_bot_message_id=sent.message_id)
@@ -74,7 +73,7 @@ async def change_page_competitors(callback: CallbackQuery, state: FSMContext):
     page = int(callback.data.split('_')[-1])
     keyboard = await kb.builder_applicant_competitors(callback.from_user.id, stats.user_score[callback.from_user.id], page)
     sent = await callback.message.edit_text(
-    change_page_text,
+        change_page_text,
     reply_markup=keyboard
     )
 

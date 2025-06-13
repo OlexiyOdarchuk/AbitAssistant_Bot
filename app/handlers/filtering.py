@@ -56,16 +56,26 @@ async def get_bal(message: Message, state: FSMContext):
 async def get_link(message: Message, state: FSMContext):
     try:
         if message.text.startswith('https://vstup.osvita.ua'): #НЕ ЗАБУДЬ СЮДИ ВПИСАТИ y2025!!!!
-            await state.set_state(st.choice_list)
-            await message.answer(
-                "🔍 Сканування розпочато. Це займе до 3 хвилин...\n\nP.S. Усе одно швидше, ніж вручну 😄",
-                reply_markup=kb.remove_keyboard
-            )
+            if "@" not in message.text:
+                await state.set_state(st.choice_list)
+                await message.answer(
+                    "🔍 Сканування розпочато. Це займе до 3 хвилин...\n\nP.S. Усе одно швидше, ніж вручну 😄",
+                    reply_markup=kb.remove_keyboard
+                )
+            else:
+                await message.answer(
+                    "❗Ах ти хакер, блін, своїми фейковими посиланнями тут не розкидуйся❗",
+                    reply_markup=kb.user_main
+                )
+                return
 
             # Очікуємо, доки звільниться місце у семафорі
             async with MULTITASK:
                 try:
-                    await parser(message.text, message.from_user.id)
+                    if await parser(message.text, message.from_user.id) == "Error":
+                        await message.answer("🧮 Помилка при обробці даних, перевірте ваше посилання, можливо воно хибне🙂", reply_markup=kb.user_main)
+                        return
+
                 except Exception:
                     await message.answer(
                         "Упс.. надто багато обробок, система не витримує, спробуйте ще раз 🙂",

@@ -25,6 +25,6 @@ dependencies = [
     "bs4>=0.0.2",
     "pydantic>=2.10.6",
     "pydantic-settings>=2.8.1",
-    "selenium>=4.30.0",
+    "selenium>=4.33.0",
     "sqlalchemy>=2.0.40",
 ]

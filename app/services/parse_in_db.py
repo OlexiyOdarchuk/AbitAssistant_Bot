@@ -102,7 +102,7 @@ async def parse_rows(driver) -> list[dict]:
     soup = BeautifulSoup(html, 'html.parser')
     table = soup.find('table', class_='rwd-table')
     if not table:
-        raise ValueError('Таблиця не знайдена на сторінці.')
+        return []
 
     rows = table.find_all('tr')[1:]
     results = []
@@ -149,7 +149,6 @@ async def parser(url: str, tg_id: int):
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--disable-software-rasterizer")
     chrome_options.add_argument("--log-level=3")
-    chrome_options.binary_location = '/usr/bin/chromium'
 
     driver = await fetch_driver(url, chrome_options)
     try:
@@ -159,37 +158,42 @@ async def parser(url: str, tg_id: int):
 
         new_user_data = []
 
-        for row in rows:
-            # Відкидаємо контрактні заявки (тип 'К')
-            if row['app_type'].upper() == 'К':
-                continue
+        if rows:
+
+            for row in rows:
+                # Відкидаємо контрактні заявки (тип 'К')
+                if row['app_type'].upper() == 'К':
+                    continue
 
             # Фільтрація по статусу
-            if not is_valid_status(row['status']):
-                continue
+                if not is_valid_status(row['status']):
+                    continue
 
-            competitor = is_competitor(
-                row['score'], row['priority'], row['quota'], row['coefficient'], tg_id
-            )
-            link = await generate_link(row['name'])
+                competitor = is_competitor(
+                    row['score'], row['priority'], row['quota'], row['coefficient'], tg_id
+                )
+                link = await generate_link(row['name'])
 
-            coeff = row['coefficient'] if row['coefficient'] else '-'
-            quota = row['quota'] if row['quota'] else '-'
+                coeff = row['coefficient'] if row['coefficient'] else '-'
+                quota = row['quota'] if row['quota'] else '-'
 
-            new_user_data.append({
-                'name': row['name'],
-                'status': row['status'],
-                'priority': row['priority'],
-                'score': row['score'],
-                'detail': row['detail'],
-                'coefficient': coeff,
-                'quota': quota,
-                'link': link,
-                'competitor': competitor
-            })
-        if tg_id not in ADMIN_ID:
-            await rq.update_user_right_activates(tg_id)
-        await rq.set_user_data(tg_id=tg_id, new_user_data=new_user_data)
+                new_user_data.append({
+                    'name': row['name'],
+                    'status': row['status'],
+                    'priority': row['priority'],
+                    'score': row['score'],
+                    'detail': row['detail'],
+                    'coefficient': coeff,
+                    'quota': quota,
+                    'link': link,
+                    'competitor': competitor
+                })
+            if tg_id not in ADMIN_ID:
+                await rq.update_user_right_activates(tg_id)
+            await rq.set_user_data(tg_id=tg_id, new_user_data=new_user_data)
+
+        else:
+            return "Error"
 
     except Exception as e:
         print(f"❌ Сталася помилка: {e}")
