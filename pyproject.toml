@@ -23,6 +23,7 @@ dependencies = [
     "aiogram>=3.20.0.post0",
     "asyncpg>=0.30.0",
     "bs4>=0.0.2",
+    "dotenv>=0.9.9",
     "pydantic>=2.10.6",
     "pydantic-settings>=2.8.1",
     "selenium>=4.33.0",

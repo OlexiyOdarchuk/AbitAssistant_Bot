@@ -3,7 +3,7 @@ services:
     image: postgres:16
     container_name: abitassistant_postgres
     restart: always
-    # Всі данні в environment поміняйте на свої, але щоб співпадало з config.py
+    # Всі данні в environment поміняйте на свої
     environment:
       POSTGRES_DB: name_db
       POSTGRES_USER: name
@@ -21,6 +21,6 @@ services:
       - db
     environment:
       DATABASE_URL: postgresql+asyncpg://name:password@db:5432/name_db # Тут поміняти назви name, password і name_db
-
+      TELEGRAM_TOKEN: YOUR_TELEGRAM_TOKEN # Тут встановіть свій токен телеграм бота
 volumes:
   pgdata:

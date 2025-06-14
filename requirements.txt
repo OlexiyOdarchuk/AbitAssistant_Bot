@@ -9,6 +9,7 @@ attrs==25.3.0
 beautifulsoup4==4.13.4
 bs4==0.0.2
 certifi==2025.4.26
+dotenv==0.9.9
 frozenlist==1.7.0
 greenlet==3.1.1
 h11==0.16.0

@@ -16,10 +16,14 @@
 import asyncio
 import os
 from aiogram import Bot
+from dotenv import load_dotenv
+load_dotenv()
 
-TELEGRAM_TOKEN = "YOUR_TELEGRAM_TOKEN" # API Token телеграм бота
+# Якщо запускаєте через docker, обов'язково впишіть дані до docker-compose.yml
 
-# URL бази данних, вставте своє ім'я, пароль і назву бази даних, але щоб співпадало з docker-compose.yml
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "YOUR_TELEGRAM_TOKEN") # API Token телеграм бота
+
+# URL бази данних, вставте своє ім'я, пароль і назву бази даних
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://name:password@localhost:5432/name_db")
 
 ADMIN_ID = [1234567890, 6587654321, 1122334455] # ID ваших Адміністраторів

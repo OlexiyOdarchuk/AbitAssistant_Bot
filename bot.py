@@ -13,10 +13,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
+import sys
 import asyncio
 import logging
 import asyncpg
 from aiogram import Dispatcher
+
+if not os.path.exists("config.py"):
+    print(
+        "\nФайл config.py не знайдено!\n"
+        "Будь ласка, скопіюйте config.example.py у config.py та заповніть необхідні значення.\n"
+        "Команда для Linux/macOS:\n"
+        "  cp config.example.py config.py\n\n"
+        "Команда для Windows:\n"
+        "  copy config.example.py config.py\n"
+    )
+    sys.exit(1)
 
 from config import bot, DATABASE_URL
 from app.handlers import setup_routers

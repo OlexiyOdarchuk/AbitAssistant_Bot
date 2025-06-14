@@ -28,7 +28,7 @@ remove_keyboard = ReplyKeyboardRemove()
 
 admin_main = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="📝Почати відсіювання!📝")],
+        [KeyboardButton(text="🧠Розпочати аналіз та фільтрацію!📊")],
         [KeyboardButton(text="💸Донат💸"), KeyboardButton(text="📑Про нас📑")],
         [KeyboardButton(text="📣Розсилка!"), KeyboardButton(text="📊Статистика!")],
     ],
@@ -37,7 +37,7 @@ admin_main = ReplyKeyboardMarkup(
 
 user_main = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="📝Почати відсіювання!📝")],
+        [KeyboardButton(text="🧠Розпочати аналіз та фільтрацію!📊")],
         [KeyboardButton(text="💸Донат💸"), KeyboardButton(text="📑Про нас📑")],
         [KeyboardButton(text="👤Зв'язок з адміністрацією👤")],
     ],

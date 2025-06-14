@@ -26,8 +26,9 @@ from config import MULTITASK
 router = Router()
 
 
-@router.message(F.text == "📝Почати відсіювання!📝")
+@router.message(F.text == "🧠Розпочати аналіз та фільтрацію!📊")
 async def start_filter(message: Message, state: FSMContext):
+    await message.answer("Перед початком роботи, будь ласка, перегляньте це відео, для розуміння того, як працювати з отриманими данними: https://www.youtube.com/watch?v=m5YfI8_2ONo", reply_markup=kb.remove_keyboard)
     await message.answer("Введіть свій коефіцієнтний бал для цієї спеціальності у форматі 123.456.\n\
 \n\n🔗 Подивитися коефіцієнти: https://www.education.ua/vstup/weighting-coefficients/\
 \n\n🧮 Порахувати бал: https://osvita.ua/consultations/konkurs-ball/", reply_markup=kb.return_back)
@@ -78,7 +79,7 @@ async def get_link(message: Message, state: FSMContext):
 
                 except Exception:
                     await message.answer(
-                        "Упс.. надто багато обробок, система не витримує, спробуйте ще раз 🙂",
+                        "Упс... у нас внутрішня помилка, спробуйте ще раз 🙂",
                         reply_markup=kb.user_main
                     )
                     return
