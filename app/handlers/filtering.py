@@ -18,28 +18,46 @@ from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
 from app.services.parse_in_db import parser
+from app.services.logger import log_user_action, log_admin_action, log_error, log_system_event
 import app.keyboards as kb
 import app.services.stats as stats
 from app.states import States as st
-from config import MULTITASK
+from config import MULTITASK, ADMIN_ID
 
 router = Router()
 
 
-@router.message(F.text == "🧠Розпочати аналіз та фільтрацію!📊")
+@router.message(F.text == "🧠 Розпочати аналіз та фільтрацію 📊")
 async def start_filter(message: Message, state: FSMContext):
-    await message.answer("Перед початком роботи, будь ласка, перегляньте це відео, для розуміння того, як працювати з отриманими данними: https://www.youtube.com/watch?v=m5YfI8_2ONo", reply_markup=kb.remove_keyboard)
-    await message.answer("Введіть свій коефіцієнтний бал для цієї спеціальності у форматі 123.456.\n\
-\n\n🔗 Подивитися коефіцієнти: https://www.education.ua/vstup/weighting-coefficients/\
-\n\n🧮 Порахувати бал: https://osvita.ua/consultations/konkurs-ball/", reply_markup=kb.return_back)
-    await state.set_state(st.get_bal)
+    try:
+        user_id = message.from_user.id
+        username = message.from_user.username
+
+        if user_id in ADMIN_ID:
+            log_admin_action(user_id, "Started analysis and filtering")
+        else:
+            log_user_action(user_id, username, "Started analysis and filtering")
+
+        await message.answer("Перед початком роботи, будь ласка, перегляньте це відео для розуміння того, як працювати з отриманими даними: https://www.youtube.com/watch?v=m5YfI8_2ONo", reply_markup=kb.remove_keyboard)
+        await message.answer("Введіть свій коефіцієнтний бал для цієї спеціальності у форматі 123.456.\n\n🔗 Подивитися коефіцієнти: https://www.education.ua/vstup/weighting-coefficients/\n\n🧮 \n\n Порахувати бал: https://osvita.ua/consultations/konkurs-ball/", reply_markup=kb.return_back)
+        await state.set_state(st.get_bal)
+    except Exception as e:
+        log_error(e, f"Error in start_filter for user {message.from_user.id}")
 
 @router.message(st.get_bal, F.text)
 async def get_bal(message: Message, state: FSMContext):
     try:
-        score = float(message.text.replace(',', '.'))
+        user_id = message.from_user.id
+        username = message.from_user.username
+        score_text = message.text
+
+        log_user_action(user_id, username, "Entered score", f"Score: {score_text}")
+
+        score = float(score_text.replace(',', '.'))
         if 100.000 <= score <= 200.000:
-            stats.user_score[message.from_user.id] = score
+            stats.user_score[user_id] = score
+            log_user_action(user_id, username, "Score validated", f"Valid score: {score}")
+
             await state.set_state(st.get_link)
             await message.answer(
                 "Чудово! 🎯\n\n"
@@ -49,47 +67,72 @@ async def get_bal(message: Message, state: FSMContext):
                 "🔗 Переконайтесь, що посилання починається з 'https://vstup.osvita.ua/y2025/'"
             )
         else:
+            log_user_action(user_id, username, "Invalid score entered", f"Score out of range: {score}")
             await message.answer("❗ Ваш бал має бути в межах від 100 до 200.")
     except ValueError:
+        user_id = message.from_user.id
+        username = message.from_user.username
+        log_user_action(user_id, username, "Invalid score format", f"Non-numeric score: {message.text}")
         await message.answer("⚠️ Будь ласка, введіть дійсне число в межах від 100 до 200.")
+    except Exception as e:
+        log_error(e, f"Error in get_bal for user {message.from_user.id}")
 
 @router.message(st.get_link, F.text)
 async def get_link(message: Message, state: FSMContext):
     try:
+        user_id = message.from_user.id
+        username = message.from_user.username
+        url = message.text
+
+        log_user_action(user_id, username, "Entered URL", f"URL: {url}")
+
         if message.text.startswith('https://vstup.osvita.ua'): #НЕ ЗАБУДЬ СЮДИ ВПИСАТИ y2025!!!!
             if "@" not in message.text:
+                log_user_action(user_id, username, "URL validated", "Starting parsing process")
+
                 await state.set_state(st.choice_list)
                 await message.answer(
                     "🔍 Сканування розпочато. Це займе до 3 хвилин...\n\nP.S. Усе одно швидше, ніж вручну 😄",
                     reply_markup=kb.remove_keyboard
                 )
             else:
+                log_user_action(user_id, username, "Suspicious URL detected", f"URL contains @: {url}")
                 await message.answer(
-                    "❗Ах ти хакер, блін, своїми фейковими посиланнями тут не розкидуйся❗",
+                    "❗ Ах ти хакер, блін, своїми фейковими посиланнями тут не розкидуйся ❗",
                     reply_markup=kb.user_main
                 )
                 return
 
-            # Очікуємо, доки звільниться місце у семафорі
+            # Жде чергу
             async with MULTITASK:
                 try:
-                    if await parser(message.text, message.from_user.id) == "Error":
-                        await message.answer("🧮 Помилка при обробці даних, перевірте ваше посилання, можливо воно хибне🙂", reply_markup=kb.user_main)
+                    log_system_event("Parsing started", f"User {user_id} started parsing URL: {url}")
+
+                    if await parser(url, user_id) == "Error":
+                        log_user_action(user_id, username, "Parsing failed", f"Error returned for URL: {url}")
+                        await message.answer("🧮 Помилка при обробці даних, перевірте ваше посилання, можливо воно хибне 🙂", reply_markup=kb.user_main)
                         return
 
-                except Exception:
+                except Exception as e:
+                    log_error(e, f"Parsing exception for user {user_id}, URL: {url}")
                     await message.answer(
                         "Упс... у нас внутрішня помилка, спробуйте ще раз 🙂",
                         reply_markup=kb.user_main
                     )
                     return
 
-            await message.answer("Готово!", reply_markup=kb.return_back)
-            how_all_applicant = await stats.all_applicant_len(message.from_user.id)
-            how_competitor_applicant = await stats.competitors_applicant_len(message.from_user.id)
+            log_user_action(user_id, username, "Parsing completed successfully", f"URL: {url}")
+            await message.answer("Готово! ✅", reply_markup=kb.return_back)
+
+            how_all_applicant = await stats.all_applicant_len(user_id)
+            how_competitor_applicant = await stats.competitors_applicant_len(user_id)
+
+            log_user_action(user_id, username, "Analysis results",
+                          f"Total applicants: {how_all_applicant}, Competitors: {how_competitor_applicant}")
+
             await message.answer(
                 f"""🔍 Аналіз завершено!
-На цю освітню програму наразі подано {how_all_applicant} бюджетних заявок.
+На цій освітній програмі наразі активно {how_all_applicant} бюджетних заявок.
 Але лише {how_competitor_applicant} з них — це ваші справжні конкуренти 😉
 
 📊 Використовуйте кнопки нижче, щоб дізнатись більше, або повертайтесь у головне меню для нової перевірки!
@@ -97,8 +140,13 @@ async def get_link(message: Message, state: FSMContext):
                 reply_markup=kb.applicant_stat
             )
 
-
         else:
+            log_user_action(user_id, username, "Invalid URL format", f"URL doesn't start with vstup.osvita.ua: {url}")
             await message.answer("Посилання повинно починатися з 'https://vstup.osvita.ua/y2025/' та бути коректним")
     except ValueError:
+        user_id = message.from_user.id
+        username = message.from_user.username
+        log_user_action(user_id, username, "URL validation error", f"ValueError for URL: {message.text}")
         await message.answer("Будь ласка, введіть посилання на освітню програму")
+    except Exception as e:
+        log_error(e, f"Error in get_link for user {message.from_user.id}")

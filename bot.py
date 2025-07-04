@@ -19,6 +19,7 @@ import asyncio
 import logging
 import asyncpg
 from aiogram import Dispatcher
+from app.services.logger import setup_logger, log_system_event, log_error
 
 if not os.path.exists("config.py"):
     print(
@@ -45,24 +46,35 @@ async def wait_for_postgres(dsn: str, timeout: int = 30):
         try:
             conn = await asyncpg.connect(dsn_clean)
             await conn.close()
-            logging.info("PostgreSQL is ready!")
+            log_system_event("PostgreSQL is ready!")
             return
         except Exception as e:
-            logging.warning(f"Waiting for PostgreSQL... {e}")
+            log_system_event("Waiting for PostgreSQL", str(e))
             await asyncio.sleep(1)
     raise TimeoutError("PostgreSQL did not become available in time.")
 
 
 async def main():
-    await wait_for_postgres(DATABASE_URL)
-    await async_main()
-    setup_routers(dp)
-    await dp.start_polling(bot)
+    try:
+        log_system_event("Starting AbitAssistant bot")
+        await wait_for_postgres(DATABASE_URL)
+        await async_main()
+        setup_routers(dp)
+        log_system_event("Bot started successfully")
+        await dp.start_polling(bot)
+    except Exception as e:
+        log_error(e, "Error in main function")
+        raise
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    # Налаштування логування
+    logger = setup_logger()
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
+        log_system_event("Bot stopped by user")
         print("Exit")
+    except Exception as e:
+        log_error(e, "Fatal error in bot")
+        print(f"Fatal error: {e}")

@@ -28,18 +28,19 @@ remove_keyboard = ReplyKeyboardRemove()
 
 admin_main = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="🧠Розпочати аналіз та фільтрацію!📊")],
-        [KeyboardButton(text="💸Донат💸"), KeyboardButton(text="📑Про нас📑")],
-        [KeyboardButton(text="📣Розсилка!"), KeyboardButton(text="📊Статистика!")],
+        [KeyboardButton(text="🧠 Розпочати аналіз та фільтрацію 📊")],
+        [KeyboardButton(text="💸 Донат 💸"), KeyboardButton(text="📑 Про нас 📑")],
+        [KeyboardButton(text="📣 Розсилка"), KeyboardButton(text="📊 Статистика")],
+        [KeyboardButton(text="👥 Користувачі"), KeyboardButton(text="📋 Логи")],
     ],
     resize_keyboard=True,
 )
 
 user_main = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="🧠Розпочати аналіз та фільтрацію!📊")],
-        [KeyboardButton(text="💸Донат💸"), KeyboardButton(text="📑Про нас📑")],
-        [KeyboardButton(text="👤Зв'язок з адміністрацією👤")],
+        [KeyboardButton(text="🧠 Розпочати аналіз та фільтрацію 📊")],
+        [KeyboardButton(text="💸 Донат 💸"), KeyboardButton(text="📑 Про нас 📑")],
+        [KeyboardButton(text="👤 Зв'язок з адміністрацією 👤")],
     ],
     resize_keyboard=True,
 )
@@ -60,7 +61,7 @@ return_back = ReplyKeyboardMarkup(
 about_us = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="💸Донат💸"), KeyboardButton(text="❌ До головного меню")
+            KeyboardButton(text="💸 Донат 💸"), KeyboardButton(text="❌ До головного меню")
         ],
     ],
     resize_keyboard=True,
@@ -69,7 +70,7 @@ about_us = ReplyKeyboardMarkup(
 mailing = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="Відправити розсилку📣"), KeyboardButton(text="❌ До головного меню"),
+            KeyboardButton(text="📣 Відправити розсилку"), KeyboardButton(text="❌ До головного меню"),
         ],
     ],
     resize_keyboard=True,
@@ -92,7 +93,7 @@ async def builder_applicant_all(tg_id:int, page:int) -> InlineKeyboardMarkup:
     for applicants_all in current_page_applicants:
         applicant_name = " ".join(applicants_all.name.split(" ")[:2])
         applicants.button(
-                text=f"                    Ім'я: '{applicant_name}' Бал: {applicants_all.score}                    ", #Я тут тупо не знайшов інших способів зробити нормальний вигляд
+                text=f"        👤 {competitor_name} | Бал: {competitors_all.score}        ",
                 callback_data=f'applicant_{applicants_all.id}'
             )
     applicants.adjust(1)
@@ -127,7 +128,7 @@ async def builder_applicant_competitors(tg_id:int, user_score:float, page:int) -
     for competitors_all in current_page_competitors:
         competitor_name = " ".join(competitors_all.name.split(" ")[:2])
         applicants.button(
-                text=f"                    Ім'я: '{competitor_name}' Бал: {competitors_all.score}                    ",
+                text=f"        👤 {competitor_name} | Бал: {competitors_all.score}        ",
                 callback_data=f'applicant_{competitors_all.id}'
             )
         applicants.adjust(1)
@@ -148,6 +149,6 @@ async def builder_applicant_competitors(tg_id:int, user_score:float, page:int) -
 
 applicant_stat = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text='Всі абітурієнти', callback_data="view_applicant_all"), InlineKeyboardButton(text="Тільки конкуренти", callback_data="view_applicant_competitors")]
+        [InlineKeyboardButton(text='📋 Всі абітурієнти', callback_data="view_applicant_all"), InlineKeyboardButton(text="🎯 Тільки конкуренти", callback_data="view_applicant_competitors")]
     ]
 )

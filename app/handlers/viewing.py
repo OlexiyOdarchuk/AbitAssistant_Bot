@@ -22,133 +22,206 @@ from aiogram.filters import StateFilter
 import app.keyboards as kb
 import app.database.requests as rq
 import app.services.stats as stats
+from app.services.logger import log_user_action, log_admin_action, log_error
 from app.states import States as st
+from config import ADMIN_ID
 
 router = Router()
-change_page_text = "Натисніть на абітурієнта, щоб побачити повну інформацію\n"
-"Натисніть на кнопки керування, або введіть бажану сторінку щоб пересуватися сторінками "
-"Натисніть на номер сторінки, щоб повернутися до попереднього меню."
+change_page_text = "Натисніть на абітурієнта, щоб побачити повну інформацію\nНатисніть на кнопки керування або введіть бажану сторінку, щоб пересуватися сторінками\nНатисніть на номер сторінки, щоб повернутися до попереднього меню."
 
 @router.callback_query(StateFilter(st.view_all, st.view_competitors), F.data == "applicant_back_to_stat")
 async def back_to_stat(callback: CallbackQuery, state:FSMContext):
-    await callback.message.delete()
-    await state.set_state(st.choice_list)
-    how_all_applicant = await stats.all_applicant_len(callback.from_user.id)
-    how_competitor_applicant = await stats.competitors_applicant_len(callback.from_user.id)
-    await callback.message.answer(
-        f"""🔙 Повернення до статистики!
-На цю освітню програму наразі подано {how_all_applicant} бюджетних заявок.
+    try:
+        user_id = callback.from_user.id
+        username = callback.from_user.username
+
+        if user_id in ADMIN_ID:
+            log_admin_action(user_id, "Returned to statistics from viewing")
+        else:
+            log_user_action(user_id, username, "Returned to statistics from viewing")
+
+        await callback.message.delete()
+        await state.set_state(st.choice_list)
+        how_all_applicant = await stats.all_applicant_len(user_id)
+        how_competitor_applicant = await stats.competitors_applicant_len(user_id)
+        await callback.message.answer(
+            f"""🔙 Повернення до статистики!
+На цій освітній програмі наразі активно {how_all_applicant} бюджетних заявок.
 Але лише {how_competitor_applicant} з них — це ваші справжні конкуренти 😉
 
 📊 Використовуйте кнопки нижче, щоб дізнатись більше, або повертайтесь у головне меню для нової перевірки!
-    """,
-        reply_markup=kb.applicant_stat
-    )
+            """,
+            reply_markup=kb.applicant_stat
+        )
+    except Exception as e:
+        log_error(e, f"Error in back_to_stat for user {callback.from_user.id}")
+
 @router.callback_query(st.choice_list, F.data == "view_applicant_all")
 async def view_applicant_all(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(st.view_all)
-    keyboard = await kb.builder_applicant_all(callback.from_user.id, 1)
-    sent = await callback.message.edit_text("Всі бюджетні заяви на дану освітню програму", reply_markup=keyboard)
-    await state.update_data(last_bot_message_id=sent.message_id)
+    try:
+        user_id = callback.from_user.id
+        username = callback.from_user.username
+
+        if user_id in ADMIN_ID:
+            log_admin_action(user_id, "Started viewing all applicants")
+        else:
+            log_user_action(user_id, username, "Started viewing all applicants")
+
+        await state.set_state(st.view_all)
+        keyboard = await kb.builder_applicant_all(user_id, 1)
+        sent = await callback.message.edit_text("📋 Всі бюджетні заяви на дану освітню програму", reply_markup=keyboard)
+        await state.update_data(last_bot_message_id=sent.message_id)
+    except Exception as e:
+        log_error(e, f"Error in view_applicant_all for user {callback.from_user.id}")
 
 @router.callback_query(st.choice_list, F.data == "view_applicant_competitors")
 async def view_applicant_competitors(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(st.view_competitors)
-    keyboard = await kb.builder_applicant_competitors(callback.from_user.id, stats.user_score[callback.from_user.id], 1)
-    sent = await callback.message.edit_text("Всі конкурентноспроможні заявки на дану освітню програму", reply_markup=keyboard)
-    await state.update_data(last_bot_message_id=sent.message_id)
+    try:
+        user_id = callback.from_user.id
+        username = callback.from_user.username
+
+        if user_id in ADMIN_ID:
+            log_admin_action(user_id, "Started viewing competitors")
+        else:
+            log_user_action(user_id, username, "Started viewing competitors")
+
+        await state.set_state(st.view_competitors)
+        keyboard = await kb.builder_applicant_competitors(user_id, stats.user_score[user_id], 1)
+        sent = await callback.message.edit_text("🎯 Всі конкурентноспроможні заявки на дану освітню програму", reply_markup=keyboard)
+        await state.update_data(last_bot_message_id=sent.message_id)
+    except Exception as e:
+        log_error(e, f"Error in view_applicant_competitors for user {callback.from_user.id}")
 
 @router.callback_query(st.view_all, F.data.startswith('applicant_page_'))
 async def change_page_all(callback: CallbackQuery, state: FSMContext):
-    page = int(callback.data.split('_')[-1])
-    keyboard = await kb.builder_applicant_all(callback.from_user.id, page)
-    sent = await callback.message.edit_text(
+    try:
+        user_id = callback.from_user.id
+        username = callback.from_user.username
+        page = int(callback.data.split('_')[-1])
+
+        log_user_action(user_id, username, "Changed page in all applicants", f"Page: {page}")
+
+        keyboard = await kb.builder_applicant_all(user_id, page)
+        sent = await callback.message.edit_text(
         change_page_text,
-    reply_markup=keyboard
-    )
-    await state.update_data(last_bot_message_id=sent.message_id)
+        reply_markup=keyboard
+        )
+        await state.update_data(last_bot_message_id=sent.message_id)
+    except Exception as e:
+        log_error(e, f"Error in change_page_all for user {callback.from_user.id}")
 
 @router.callback_query(st.view_competitors, F.data.startswith('competitors_page_'))
 async def change_page_competitors(callback: CallbackQuery, state: FSMContext):
-    page = int(callback.data.split('_')[-1])
-    keyboard = await kb.builder_applicant_competitors(callback.from_user.id, stats.user_score[callback.from_user.id], page)
-    sent = await callback.message.edit_text(
-        change_page_text,
-    reply_markup=keyboard
-    )
+    try:
+        user_id = callback.from_user.id
+        username = callback.from_user.username
+        page = int(callback.data.split('_')[-1])
 
-    await state.update_data(last_bot_message_id=sent.message_id)
+        log_user_action(user_id, username, "Changed page in competitors", f"Page: {page}")
+
+        keyboard = await kb.builder_applicant_competitors(user_id, stats.user_score[user_id], page)
+        sent = await callback.message.edit_text(
+        change_page_text,
+        reply_markup=keyboard
+        )
+
+        await state.update_data(last_bot_message_id=sent.message_id)
+    except Exception as e:
+        log_error(e, f"Error in change_page_competitors for user {callback.from_user.id}")
 
 @router.message(st.view_all)
 async def change_page_at_message_all(message:Message, state: FSMContext):
-    await message.delete()
-
-    data = await state.get_data()
-    last_bot_message_id = data.get("last_bot_message_id")
-
-    if last_bot_message_id:
-        try:
-            await message.bot.delete_message(chat_id=message.chat.id, message_id=last_bot_message_id)
-        except Exception as e:
-            print(f"Не вдалося видалити старе повідомлення бота: {e}")
-
     try:
-        page = int(message.text)
-    except ValueError:
-        await message.answer("Будь ласка, введіть номер сторінки числом.")
-        return
+        user_id = message.from_user.id
+        username = message.from_user.username
 
-    keyboard = await kb.builder_applicant_all(message.from_user.id, page)
+        await message.delete()
 
-    sent = await message.answer(
-        change_page_text,
-        reply_markup=keyboard
-    )
+        data = await state.get_data()
+        last_bot_message_id = data.get("last_bot_message_id")
 
-    await state.update_data(last_bot_message_id=sent.message_id)
+        if last_bot_message_id:
+            try:
+                await message.bot.delete_message(chat_id=message.chat.id, message_id=last_bot_message_id)
+            except Exception as e:
+                log_error(e, f"Failed to delete old bot message for user {user_id}")
+
+        try:
+            page = int(message.text)
+            log_user_action(user_id, username, "Changed page via message in all applicants", f"Page: {page}")
+        except ValueError:
+            log_user_action(user_id, username, "Invalid page number entered", f"Invalid input: {message.text}")
+            await message.answer("Будь ласка, введіть номер сторінки числом.")
+            return
+
+        keyboard = await kb.builder_applicant_all(user_id, page)
+
+        sent = await message.answer(
+            change_page_text,
+            reply_markup=keyboard
+        )
+
+        await state.update_data(last_bot_message_id=sent.message_id)
+    except Exception as e:
+        log_error(e, f"Error in change_page_at_message_all for user {message.from_user.id}")
 
 @router.message(st.view_competitors)
 async def change_page_at_message_competitors(message:Message, state: FSMContext):
-    await message.delete()
-
-    data = await state.get_data()
-    last_bot_message_id = data.get("last_bot_message_id")
-
-    if last_bot_message_id:
-        try:
-            await message.bot.delete_message(chat_id=message.chat.id, message_id=last_bot_message_id)
-        except Exception as e:
-            print(f"Не вдалося видалити старе повідомлення бота: {e}")
-
     try:
-        page = int(message.text)
-    except ValueError:
-        await message.answer("Будь ласка, введіть номер сторінки числом.")
-        return
+        user_id = message.from_user.id
+        username = message.from_user.username
 
-    keyboard = await kb.builder_applicant_competitors(message.from_user.id, stats.user_score[message.from_user.id], page)
+        await message.delete()
 
-    sent = await message.answer(
-        change_page_text,
-        reply_markup=keyboard
-    )
+        data = await state.get_data()
+        last_bot_message_id = data.get("last_bot_message_id")
 
-    await state.update_data(last_bot_message_id=sent.message_id)
+        if last_bot_message_id:
+            try:
+                await message.bot.delete_message(chat_id=message.chat.id, message_id=last_bot_message_id)
+            except Exception as e:
+                log_error(e, f"Failed to delete old bot message for user {user_id}")
+
+        try:
+            page = int(message.text)
+            log_user_action(user_id, username, "Changed page via message in competitors", f"Page: {page}")
+        except ValueError:
+            log_user_action(user_id, username, "Invalid page number entered", f"Invalid input: {message.text}")
+            await message.answer("Будь ласка, введіть номер сторінки числом.")
+            return
+
+        keyboard = await kb.builder_applicant_competitors(user_id, stats.user_score[user_id], page)
+
+        sent = await message.answer(
+            change_page_text,
+            reply_markup=keyboard
+        )
+
+        await state.update_data(last_bot_message_id=sent.message_id)
+    except Exception as e:
+        log_error(e, f"Error in change_page_at_message_competitors for user {message.from_user.id}")
 
 @router.callback_query(StateFilter(st.view_all, st.view_competitors), F.data.startswith('applicant_'))
 async def all_info(callback: CallbackQuery):
-    await callback.answer()
-    data = await rq.get_user_data(callback.from_user.id)
-    applicant_id = int(callback.data.split('_')[-1])
-    applicants = [applicant for applicant in data if applicant.user_tg_id == callback.from_user.id]
-    for applicant in applicants:
-        if applicant.id == applicant_id:
-            display_quota = applicant.quota if applicant.quota else "-"
-            display_coefficient = applicant.coefficient if applicant.coefficient else "-"
-            formatted_detail = "-"
-            if applicant.detail:
-                formatted_detail = re.sub(r'([А-ЯІЇЄA-Zа-яіїєҐґ\s]+?)(\d{2,3})(?=[А-ЯІЇЄA-Z])', r'\1: \2\n', applicant.detail).strip() # ([А-ЯІЇЄA-Zа-яіїєҐґ\s]+?) - ловить назву, (\d{2,3}) - ловить число, (?=[А-ЯІЇЄA-Z]) - після числа повинно бути велика літера
-            await callback.message.answer(
+    try:
+        user_id = callback.from_user.id
+        username = callback.from_user.username
+
+        await callback.answer()
+        data = await rq.get_user_data(user_id)
+        applicant_id = int(callback.data.split('_')[-1])
+        applicants = [applicant for applicant in data if applicant.user_tg_id == user_id]
+
+        for applicant in applicants:
+            if applicant.id == applicant_id:
+                log_user_action(user_id, username, "Viewed applicant details", f"Applicant: {applicant.name}, ID: {applicant_id}")
+
+                display_quota = applicant.quota if applicant.quota else "-"
+                display_coefficient = applicant.coefficient if applicant.coefficient else "-"
+                formatted_detail = "-"
+                if applicant.detail:
+                    formatted_detail = re.sub(r'([А-ЯІЇЄA-Zа-яіїєҐґ\s]+?)(\d{2,3})(?=[А-ЯІЇЄA-Z])', r'\1: \2\n', applicant.detail).strip() # ([А-ЯІЇЄA-Zа-яіїєҐґ\s]+?) - ловить назву, (\d{2,3}) - ловить число, (?=[А-ЯІЇЄA-Z]) - після числа повинно бути велика літера
+                await callback.message.answer(
 f"""📄 Повна інформація про абітурієнта:
 
 👤 ПІП: {applicant.name}
@@ -165,3 +238,6 @@ f"""📄 Повна інформація про абітурієнта:
 🔗 Посилання на абіт-пошук:
 {applicant.link if applicant.link else '-'}
 """)
+                break
+    except Exception as e:
+        log_error(e, f"Error in all_info for user {callback.from_user.id}")

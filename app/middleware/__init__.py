@@ -13,16 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from aiogram.fsm.state import State, StatesGroup
+from .logging_middleware import LoggingMiddleware
 
-class States(StatesGroup):
-    get_mailing = State()
-    init_mailing = State()
-    get_support = State()
-    init_support = State()
-    get_bal = State()
-    get_link = State()
-    choice_list = State()
-    view_all = State()
-    view_competitors = State()
-    search_user = State()
+__all__ = ['LoggingMiddleware']

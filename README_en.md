@@ -36,6 +36,9 @@
 - 🧾 Generates a list of competitors by selected specialty
 - 🔗 Generates direct links to applicants on [abit.poisk](https://abit-poisk.org.ua/)
 - 📂 Stores all data in a local database
+- 👥 Administrative panel for user management
+- 📋 System logging for administrator actions
+- 📣 Mass messaging to users
 
 ---
 
@@ -71,6 +74,17 @@
 ## 🚀 Usage
 
 Once started, the bot runs automatically in Telegram.
+
+### 👥 Administrative Features
+
+The bot includes a comprehensive administrative panel for management:
+
+- **👥 Users** — view user list with `tg://user?id=ID` links
+- **📣 Mailing** — mass messaging to users
+- **📊 Statistics** — general bot statistics
+- **📋 Logs** — view system logs and download them
+
+All administrator actions are automatically logged for activity tracking.
 
 ---
 
@@ -135,13 +149,19 @@ The project follows a clear structure: key files are in the root, and all logic 
 │   │   ├── [support.py](./app/handlers/support.py) — user feedback<br>
 │   │   ├── [viewing.py](./app/handlers/viewing.py) — view applicants<br>
 │   ├── services/ — core bot logic (parsing, analysis, generation)<br>
-│   │   ├── [stats.py](./app/services/stats.py) — get statistics<br>
+│   │   ├── [applicants_len.py](./app/services/applicants_len.py) — applicant counter<br>
 │   │   ├── [parse_in_db.py](./app/services/parse_in_db.py) — parse, analyze, and store<br>
 │   │   ├── [generate_link.py](./app/services/generate_link.py) — link generation<br>
 │   │   ├── [mailing.py](./app/services/mailing.py) — mailings<br>
 │   │   ├── [support.py](./app/services/support.py) — feedback handling<br>
+│   │   ├── [user_management.py](./app/services/user_management.py) — user management<br>
+│   │   ├── [logger.py](./app/services/logger.py) — logging system<br>
+│   │   ├── [stats.py](./app/services/stats.py) — statistics<br>
 │   ├── [keyboards.py](./app/keyboards.py) — inline and reply keyboards<br>
 │   ├── [states.py](./app/states.py) — FSM states<br>
+│   ├── middleware/ — middleware components<br>
+│   │   ├── [__init__.py](./app/middleware/__init__.py) — package initializer<br>
+│   │   ├── [logging_middleware.py](./app/middleware/logging_middleware.py) — request logging<br>
 
 ---
 

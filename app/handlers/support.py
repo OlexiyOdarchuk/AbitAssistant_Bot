@@ -22,7 +22,7 @@ from app.states import States as st
 
 router = Router()
 
-@router.message(F.text == "👤Зв'язок з адміністрацією👤")
+@router.message(F.text == "👤 Зв'язок з адміністрацією 👤")
 async def support(message: Message, state: FSMContext):
     await sup.support(message, state)
 
