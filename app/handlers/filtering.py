@@ -16,6 +16,7 @@
 from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
+from urllib.parse import urlparse
 
 from app.services.parse_in_db import parser
 from app.services.logger import log_user_action, log_admin_action, log_error, log_system_event
@@ -86,7 +87,8 @@ async def get_link(message: Message, state: FSMContext):
 
         log_user_action(user_id, username, "Entered URL", f"URL: {url}")
 
-        if message.text.startswith('https://vstup.osvita.ua'): #НЕ ЗАБУДЬ СЮДИ ВПИСАТИ y2025!!!!
+        parsed_url = urlparse(message.text)
+        if parsed_url.hostname == 'vstup.osvita.ua': #НЕ ЗАБУДЬ СЮДИ ВПИСАТИ y2025!!!!
             if "@" not in message.text:
                 log_user_action(user_id, username, "URL validated", "Starting parsing process")
 
