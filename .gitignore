@@ -14,3 +14,17 @@ wheels/
 test.py
 config.py
 docker-compose.yml
+
+# Log files
+logs/
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

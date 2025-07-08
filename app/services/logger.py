@@ -198,6 +198,7 @@ def log_error(error: Exception, context: Optional[str] = None):
 
 def log_system_event(event: str, details: Optional[str] = None):
     """Логує системні події"""
+    logger = setup_logger("AbitAssistant")
     message = f"SYSTEM: {event}"
     if details:
         message += f" - {details}"

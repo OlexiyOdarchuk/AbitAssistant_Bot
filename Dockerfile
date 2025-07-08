@@ -31,16 +31,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxshmfence1 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Створюємо ізольованого користувача (безпечніше)
-RUN useradd -m botuser
-
 WORKDIR /AbitAssistant_Bot
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-
-USER botuser
 
 CMD ["python", "bot.py"]
