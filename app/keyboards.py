@@ -93,7 +93,7 @@ async def builder_applicant_all(tg_id:int, page:int) -> InlineKeyboardMarkup:
     for applicants_all in current_page_applicants:
         applicant_name = " ".join(applicants_all.name.split(" ")[:2])
         applicants.button(
-                text=f"        👤 {competitor_name} | Бал: {competitors_all.score}        ",
+                text=f"        👤 {applicant_name} | Бал: {applicants_all.score}        ",
                 callback_data=f'applicant_{applicants_all.id}'
             )
     applicants.adjust(1)
