@@ -97,9 +97,67 @@ async def fetch_driver(url: str, chrome_options: Options, tg_id: int):
         raise
 
 
+async def click_consent_button(driver, tg_id: int):
+    """Клікає на кнопку згоди (consent button) якщо вона є на сторінці."""
+    log_parsing_step(tg_id, "CONSENT_CHECK", "Checking for consent button")
+    
+    try:
+        # Шукаємо кнопку згоди за різними селекторами
+        consent_selectors = [
+            "button[aria-label*='Погоджуюся']",
+            "button[aria-label*='Согласен']", 
+            "button[aria-label*='Agree']",
+            ".fc-button.fc-cta-consent",
+            ".fc-primary-button",
+            "button[class*='consent']",
+            "button[class*='agree']",
+            "button:contains('Погоджуюся')",
+            "button:contains('Согласен')",
+            "button:contains('Agree')"
+        ]
+        
+        for selector in consent_selectors:
+            try:
+                elements = await asyncio.to_thread(driver.find_elements, By.CSS_SELECTOR, selector)
+                for element in elements:
+                    if element.is_displayed():
+                        log_parsing_step(tg_id, "CONSENT_CLICK", f"Found and clicking consent button with selector: {selector}")
+                        await asyncio.to_thread(driver.execute_script, "arguments[0].click();", element)
+                        await asyncio.to_thread(time.sleep, 1)
+                        log_parsing_step(tg_id, "CONSENT_CLICKED", "Consent button clicked successfully")
+                        return True
+            except Exception as e:
+                continue
+        
+        # Додаткова перевірка за текстом кнопки
+        try:
+            elements = await asyncio.to_thread(driver.find_elements, By.XPATH, 
+                "//button[contains(text(), 'Погоджуюся') or contains(text(), 'Согласен') or contains(text(), 'Agree')]")
+            for element in elements:
+                if element.is_displayed():
+                    log_parsing_step(tg_id, "CONSENT_CLICK", "Found and clicking consent button by text")
+                    await asyncio.to_thread(driver.execute_script, "arguments[0].click();", element)
+                    await asyncio.to_thread(time.sleep, 1)
+                    log_parsing_step(tg_id, "CONSENT_CLICKED", "Consent button clicked successfully")
+                    return True
+        except Exception as e:
+            pass
+            
+        log_parsing_step(tg_id, "CONSENT_CHECK", "No consent button found or needed")
+        return False
+        
+    except Exception as e:
+        log_error(e, f"Error checking/clicking consent button for user {tg_id}")
+        return False
+
+
 async def click_all_details(driver, tg_id: int):
     """Клікає на кнопку 'Завантажити ще'."""
     log_parsing_step(tg_id, "EXPAND_DETAILS", "Starting to expand all details")
+    
+    # Спочатку перевіряємо та клікаємо на кнопку згоди
+    await click_consent_button(driver, tg_id)
+    
     click_count = 0
 
     while True:
@@ -129,8 +187,8 @@ async def parse_rows(driver, tg_id: int) -> list[dict]:
     soup = BeautifulSoup(html, 'html.parser')
     table = soup.find('table', class_='rwd-table')
 
-    if not table:
-        log_parsing_step(tg_id, "PARSE_ROWS", "No table found on page")
+    if not table or not hasattr(table, 'find_all'):
+        log_parsing_step(tg_id, "PARSE_ROWS", "No valid table found on page")
         return []
 
     rows = table.find_all('tr')[1:]  # Пропускаємо заголовок
