@@ -25,26 +25,22 @@ async def generate_link(name: str) -> str:
         str: Посилання на сайт abit-poisk.org
     """
     await asyncio.sleep(0)
-    parts = name.split()
+    parts = name.strip().split()
+
     if len(parts) < 2:
         return "Помилка генерації посилання: Ім'я повинно складатися з принаймні двох слів"
 
     surname = parts[0]
-    first_part = parts[1]
+    initials = []
 
-    # Обробляє скорочені імена (І.І.)
-    if '.' in first_part:
-        initials = first_part.split('.')
-        first_initial = initials[0]
-        if len(initials) > 1 and initials[1]:
-            middle_initial = initials[1]
-            return f"https://abit-poisk.org.ua/#search-{surname}+{first_initial}+{middle_initial}"
-        else:
-            return f"https://abit-poisk.org.ua/#search-{surname}+{first_initial}"
-    else:
-        first_initial = first_part[0]
-        if len(parts) > 2:
-            middle_initial = parts[2][0]
-            return f"https://abit-poisk.org.ua/#search-{surname}+{first_initial}+{middle_initial}"
-        else:
-            return f"https://abit-poisk.org.ua/#search-{surname}+{first_initial}"
+    # Витягуємо перші літери або ініціали з крапками
+    for part in parts[1:]:
+        cleaned = part.strip(".")
+        if cleaned:
+            initials.append(cleaned[0])
+
+    if not initials:
+        return f"https://abit-poisk.org.ua/#search-{surname}"
+
+    initials_str = '+'.join([surname] + initials)
+    return f"https://abit-poisk.org.ua/#search-{initials_str}"
