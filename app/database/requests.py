@@ -67,7 +67,13 @@ async def get_user_data(tg_id: int) -> List[UserData]:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
         if not user:
             raise Exception("User not found")
-        result = await session.scalars(select(UserData).where(UserData.user_tg_id == tg_id))
+
+        result = await session.scalars(
+            select(UserData)
+            .where(UserData.user_tg_id == tg_id)
+            .order_by(desc(UserData.score))
+        )
+
         return result.all()
 
 async def clear_user_data(tg_id: int) -> None:
