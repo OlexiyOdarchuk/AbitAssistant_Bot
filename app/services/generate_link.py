@@ -15,6 +15,7 @@
 
 import asyncio
 
+
 async def generate_link(name: str) -> str:
     """Асинхронно генерує посилання на абітурієнта на сайті abit-poisk.org
 
@@ -28,7 +29,9 @@ async def generate_link(name: str) -> str:
     parts = name.strip().split()
 
     if len(parts) < 2:
-        return "Помилка генерації посилання: Ім'я повинно складатися з принаймні двох слів"
+        return (
+            "Помилка генерації посилання: Ім'я повинно складатися з принаймні двох слів"
+        )
 
     surname = parts[0]
     initials = []
@@ -42,5 +45,5 @@ async def generate_link(name: str) -> str:
     if not initials:
         return f"https://abit-poisk.org.ua/#search-{surname}"
 
-    initials_str = '+'.join([surname] + initials)
+    initials_str = "+".join([surname] + initials)
     return f"https://abit-poisk.org.ua/#search-{initials_str}"

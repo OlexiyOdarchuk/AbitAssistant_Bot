@@ -15,10 +15,10 @@
 
 from sqlalchemy import select
 from app.database.models import async_session, User
-from typing import List
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 async def get_users_with_links(limit: int = 50) -> str:
     """Отримує список користувачів з посиланнями tg://user?id= для адміністраторів"""

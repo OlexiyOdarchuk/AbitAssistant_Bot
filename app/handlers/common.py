@@ -26,6 +26,7 @@ from app.services.logger import log_user_action, log_admin_action, log_error
 
 router = Router()
 
+
 @router.message(CommandStart())
 async def start(message: Message):
     try:
@@ -33,14 +34,17 @@ async def start(message: Message):
             log_admin_action(message.from_user.id, "Started bot")
             await rq.set_user(message.from_user.id)
             await message.answer(
-                "О, ку! 👋\nНа менюшку, може вона тобі треба 😊", reply_markup=kb.admin_main
+                "О, ку! 👋\nНа менюшку, може вона тобі треба 😊",
+                reply_markup=kb.admin_main,
             )
         else:
-            log_user_action(message.from_user.id, message.from_user.username, "Started bot")
+            log_user_action(
+                message.from_user.id, message.from_user.username, "Started bot"
+            )
             for admin in ADMIN_ID:
                 await bot.send_message(
                     chat_id=admin,
-                    text=f"Зареєстровано нового користувача: {message.from_user.full_name}\nLink: tg://user?id={message.from_user.id}:"
+                    text=f"Зареєстровано нового користувача: {message.from_user.full_name}\nLink: tg://user?id={message.from_user.id}:",
                 )
 
             await rq.set_user(message.from_user.id)
@@ -62,6 +66,7 @@ P.S. Якщо у вас 200 хоча б з одного, або з усіх пр
             )
     except Exception as e:
         log_error(e, f"Error in start command for user {message.from_user.id}")
+
 
 @router.message(F.text == "❌ До головного меню")
 async def return_back(message: Message, state: FSMContext):
@@ -151,7 +156,7 @@ https://github.com/OlexiyOdarchuk/AbitAssistant_bot"""
             """🙏 Якщо вам сподобалась ідея або бот був корисним, підтримайте проєкт донатом — навіть кілька гривень важливі для покриття витрат на сервери.
 
 🛠 А ще — долучайтесь до розробки або лишайте свої пропозиції на GitHub та в 'Зв'язок з адміністрацією' 👨‍💻""",
-            reply_markup=kb.about_us
+            reply_markup=kb.about_us,
         )
     except Exception as e:
         log_error(e, f"Error in about_us command for user {message.from_user.id}")

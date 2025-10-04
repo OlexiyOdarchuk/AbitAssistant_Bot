@@ -23,10 +23,15 @@ from bs4 import BeautifulSoup
 import tempfile
 
 from app.services.generate_link import generate_link
-from app.services.logger import log_parsing_action, log_parsing_step, log_error, log_user_action
+from app.services.logger import (
+    log_parsing_action,
+    log_parsing_step,
+    log_error,
+)
 import app.database.requests as rq
 import app.services.stats as stats
 from config import ADMIN_ID
+
 
 def clean_score(raw_score: str) -> float:
     """
@@ -35,11 +40,11 @@ def clean_score(raw_score: str) -> float:
     """
     try:
         # Видаляємо всі символи крім цифр, крапок та ком
-        cleaned = re.sub(r'[^\d.,]', '', raw_score.replace('–', '').replace('-', ''))
+        cleaned = re.sub(r"[^\d.,]", "", raw_score.replace("–", "").replace("-", ""))
         # Замінюємо коми на крапки
-        cleaned = cleaned.replace(',', '.')
+        cleaned = cleaned.replace(",", ".")
         # Знаходимо перше число (може бути з десятковою частиною)
-        match = re.search(r'\d+\.?\d*', cleaned)
+        match = re.search(r"\d+\.?\d*", cleaned)
         if match:
             return float(match.group(0))
         return 0.0
@@ -50,26 +55,37 @@ def clean_score(raw_score: str) -> float:
 
 def has_quota_or_coefficient(quota: str, coefficient: str) -> bool:
     """Перевірка на наявність квоти або коефіцієнту"""
-    quota_codes = {'КВ1', 'КВ2', 'ПО', 'СБ'}
-    coefficient_codes = {'РК', 'ГК', 'ОУ'}
+    quota_codes = {"КВ1", "КВ2", "ПО", "СБ"}
+    coefficient_codes = {"РК", "ГК", "ОУ"}
 
-    quota_set = set(q.strip().upper() for q in (quota or '').split(',') if q.strip())
-    coefficient_set = set(c.strip().upper() for c in (coefficient or '').split(',') if c.strip())
+    quota_set = set(q.strip().upper() for q in (quota or "").split(",") if q.strip())
+    coefficient_set = set(
+        c.strip().upper() for c in (coefficient or "").split(",") if c.strip()
+    )
 
-    return bool(quota_codes.intersection(quota_set)) or bool(coefficient_codes.intersection(coefficient_set))
+    return bool(quota_codes.intersection(quota_set)) or bool(
+        coefficient_codes.intersection(coefficient_set)
+    )
 
 
 def is_valid_status(status: str) -> bool:
     """Статуси, які виключаються (враховуючи всі варіанти)"""
 
     excluded_statuses = [
-        'відмова', 'скасовано', 'затримано', 'відхилено', 'відмовлено', 'скасовано (втрата пріор.)'
+        "відмова",
+        "скасовано",
+        "затримано",
+        "відхилено",
+        "відмовлено",
+        "скасовано (втрата пріор.)",
     ]
     status_lower = status.lower()
     return not any(excluded in status_lower for excluded in excluded_statuses)
 
 
-def is_competitor(score: float, priority: int, quota: str, coefficient: str, tg_id: int) -> bool:
+def is_competitor(
+    score: float, priority: int, quota: str, coefficient: str, tg_id: int
+) -> bool:
     base_score = stats.user_score.get(tg_id, 0.0)
     has_quota_coeff = has_quota_or_coefficient(quota, coefficient)
 
@@ -100,12 +116,12 @@ async def fetch_driver(url: str, chrome_options: Options, tg_id: int):
 async def click_consent_button(driver, tg_id: int):
     """Клікає на кнопку згоди (consent button) якщо вона є на сторінці."""
     log_parsing_step(tg_id, "CONSENT_CHECK", "Checking for consent button")
-    
+
     try:
         # Шукаємо кнопку згоди за різними селекторами
         consent_selectors = [
             "button[aria-label*='Погоджуюся']",
-            "button[aria-label*='Согласен']", 
+            "button[aria-label*='Согласен']",
             "button[aria-label*='Agree']",
             ".fc-button.fc-cta-consent",
             ".fc-primary-button",
@@ -113,39 +129,62 @@ async def click_consent_button(driver, tg_id: int):
             "button[class*='agree']",
             "button:contains('Погоджуюся')",
             "button:contains('Согласен')",
-            "button:contains('Agree')"
+            "button:contains('Agree')",
         ]
-        
+
         for selector in consent_selectors:
             try:
-                elements = await asyncio.to_thread(driver.find_elements, By.CSS_SELECTOR, selector)
+                elements = await asyncio.to_thread(
+                    driver.find_elements, By.CSS_SELECTOR, selector
+                )
                 for element in elements:
                     if element.is_displayed():
-                        log_parsing_step(tg_id, "CONSENT_CLICK", f"Found and clicking consent button with selector: {selector}")
-                        await asyncio.to_thread(driver.execute_script, "arguments[0].click();", element)
+                        log_parsing_step(
+                            tg_id,
+                            "CONSENT_CLICK",
+                            f"Found and clicking consent button with selector: {selector}",
+                        )
+                        await asyncio.to_thread(
+                            driver.execute_script, "arguments[0].click();", element
+                        )
                         await asyncio.to_thread(time.sleep, 1)
-                        log_parsing_step(tg_id, "CONSENT_CLICKED", "Consent button clicked successfully")
+                        log_parsing_step(
+                            tg_id,
+                            "CONSENT_CLICKED",
+                            "Consent button clicked successfully",
+                        )
                         return True
-            except Exception as e:
+            except Exception:
                 continue
-        
+
         # Додаткова перевірка за текстом кнопки
         try:
-            elements = await asyncio.to_thread(driver.find_elements, By.XPATH, 
-                "//button[contains(text(), 'Погоджуюся') or contains(text(), 'Согласен') or contains(text(), 'Agree')]")
+            elements = await asyncio.to_thread(
+                driver.find_elements,
+                By.XPATH,
+                "//button[contains(text(), 'Погоджуюся') or contains(text(), 'Согласен') or contains(text(), 'Agree')]",
+            )
             for element in elements:
                 if element.is_displayed():
-                    log_parsing_step(tg_id, "CONSENT_CLICK", "Found and clicking consent button by text")
-                    await asyncio.to_thread(driver.execute_script, "arguments[0].click();", element)
+                    log_parsing_step(
+                        tg_id,
+                        "CONSENT_CLICK",
+                        "Found and clicking consent button by text",
+                    )
+                    await asyncio.to_thread(
+                        driver.execute_script, "arguments[0].click();", element
+                    )
                     await asyncio.to_thread(time.sleep, 1)
-                    log_parsing_step(tg_id, "CONSENT_CLICKED", "Consent button clicked successfully")
+                    log_parsing_step(
+                        tg_id, "CONSENT_CLICKED", "Consent button clicked successfully"
+                    )
                     return True
-        except Exception as e:
+        except Exception:
             pass
-            
+
         log_parsing_step(tg_id, "CONSENT_CHECK", "No consent button found or needed")
         return False
-        
+
     except Exception as e:
         log_error(e, f"Error checking/clicking consent button for user {tg_id}")
         return False
@@ -153,29 +192,41 @@ async def click_consent_button(driver, tg_id: int):
 
 async def click_all_details(driver, tg_id: int):
     """Клікає на кнопку 'Завантажити ще'."""
-    log_parsing_step(tg_id, "EXPAND_DETAILS", "Starting to expand all details")
-    
+    log_parsing_step(tg_id, "EXPAND_DETAILS", "Starting to expand alls details")
+
     # Спочатку перевіряємо та клікаємо на кнопку згоди
     await click_consent_button(driver, tg_id)
-    
+
     click_count = 0
 
     while True:
-        elements = await asyncio.to_thread(driver.find_elements, By.CLASS_NAME, "detail-link")
+        elements = await asyncio.to_thread(
+            driver.find_elements, By.CLASS_NAME, "detail-link"
+        )
         if not elements:
-            log_parsing_step(tg_id, "EXPAND_DETAILS", f"No more detail links found, clicked {click_count} times")
+            log_parsing_step(
+                tg_id,
+                "EXPAND_DETAILS",
+                f"No more detail links found, clicked {click_count} times",
+            )
             break
 
         clicked = False
         for el in elements:
             if el.is_displayed():
-                await asyncio.to_thread(driver.execute_script, "arguments[0].click();", el)
+                await asyncio.to_thread(
+                    driver.execute_script, "arguments[0].click();", el
+                )
                 await asyncio.to_thread(time.sleep, 1)
                 clicked = True
                 click_count += 1
 
         if not clicked:
-            log_parsing_step(tg_id, "EXPAND_DETAILS", f"Finished expanding details, total clicks: {click_count}")
+            log_parsing_step(
+                tg_id,
+                "EXPAND_DETAILS",
+                f"Finished expanding details, total clicks: {click_count}",
+            )
             break
 
 
@@ -184,14 +235,14 @@ async def parse_rows(driver, tg_id: int) -> list[dict]:
     log_parsing_step(tg_id, "PARSE_ROWS", "Starting to parse table rows")
 
     html = await asyncio.to_thread(lambda: driver.page_source)
-    soup = BeautifulSoup(html, 'html.parser')
-    table = soup.find('table', class_='rwd-table')
+    soup = BeautifulSoup(html, "html.parser")
+    table = soup.find("table", class_="rwd-table")
 
-    if not table or not hasattr(table, 'find_all'):
+    if not table or not hasattr(table, "find_all"):
         log_parsing_step(tg_id, "PARSE_ROWS", "No valid table found on page")
         return []
 
-    rows = table.find_all('tr')[1:]  # Пропускаємо заголовок
+    rows = table.find_all("tr")[1:]  # Пропускаємо заголовок
     log_parsing_step(tg_id, "PARSE_ROWS", f"Found {len(rows)} rows to parse")
 
     results = []
@@ -199,10 +250,14 @@ async def parse_rows(driver, tg_id: int) -> list[dict]:
     invalid_data_rows = 0
 
     for idx, row in enumerate(rows, start=1):
-        cells = [td.get_text(strip=True) for td in row.find_all('td')]
+        cells = [td.get_text(strip=True) for td in row.find_all("td")]
 
         if len(cells) < 9:
-            log_parsing_step(tg_id, "PARSE_ROW_ERROR", f"Row {idx}: insufficient data ({len(cells)} cells)")
+            log_parsing_step(
+                tg_id,
+                "PARSE_ROW_ERROR",
+                f"Row {idx}: insufficient data ({len(cells)} cells)",
+            )
             invalid_data_rows += 1
             continue
 
@@ -213,10 +268,14 @@ async def parse_rows(driver, tg_id: int) -> list[dict]:
             priority = int(cells[3])
         except ValueError:
             priority = 0
-            log_parsing_step(tg_id, "PARSE_ROW_WARNING", f"Row {idx}: invalid priority value '{cells[3]}', using 0")
+            log_parsing_step(
+                tg_id,
+                "PARSE_ROW_WARNING",
+                f"Row {idx}: invalid priority value '{cells[3]}', using 0",
+            )
 
         # Перевіряємо чи це контрактна заявка
-        if cells[8].upper() == 'К':
+        if cells[8].upper() == "К":
             skipped_rows += 1
             continue
 
@@ -225,33 +284,40 @@ async def parse_rows(driver, tg_id: int) -> list[dict]:
             skipped_rows += 1
             continue
 
-        results.append({
-            'name': cells[1],
-            'status': cells[2],
-            'priority': priority,
-            'raw_score': raw_score,
-            'score': score,
-            'detail': cells[5],
-            'coefficient': cells[6],
-            'quota': cells[7],
-            'app_type': cells[8],
-        })
+        results.append(
+            {
+                "name": cells[1],
+                "status": cells[2],
+                "priority": priority,
+                "raw_score": raw_score,
+                "score": score,
+                "detail": cells[5],
+                "coefficient": cells[6],
+                "quota": cells[7],
+                "app_type": cells[8],
+            }
+        )
 
-    log_parsing_step(tg_id, "PARSE_ROWS_COMPLETE",
-                    f"Parsed {len(results)} valid rows, skipped {skipped_rows} invalid rows, {invalid_data_rows} rows with insufficient data")
+    log_parsing_step(
+        tg_id,
+        "PARSE_ROWS_COMPLETE",
+        f"Parsed {len(results)} valid rows, skipped {skipped_rows} invalid rows, {invalid_data_rows} rows with insufficient data",
+    )
     return results
 
 
 async def parser(url: str, tg_id: int):
     """Працює з сторінкою, обробляє дані і зберігає їх у базі даних."""
     start_time = time.time()
-    log_parsing_action(tg_id, "PARSING_STARTED", f"Starting parsing process", url)
+    log_parsing_action(tg_id, "PARSING_STARTED", "Starting parsing process", url)
 
     try:
         # Оновлюємо лічильник активів для звичайних користувачів
         if tg_id not in ADMIN_ID:
             await rq.update_user_activates(tg_id)
-            log_parsing_step(tg_id, "ACTIVATES_UPDATED", "User activates counter updated")
+            log_parsing_step(
+                tg_id, "ACTIVATES_UPDATED", "User activates counter updated"
+            )
 
         # Налаштовуємо Chrome
         user_data_dir = tempfile.mkdtemp(prefix=f"chromium_{tg_id}")
@@ -264,7 +330,11 @@ async def parser(url: str, tg_id: int):
         chrome_options.add_argument("--disable-software-rasterizer")
         chrome_options.add_argument("--log-level=3")
 
-        log_parsing_step(tg_id, "CHROME_SETUP", f"Chrome options configured, temp dir: {user_data_dir}")
+        log_parsing_step(
+            tg_id,
+            "CHROME_SETUP",
+            f"Chrome options configured, temp dir: {user_data_dir}",
+        )
 
         # Створюємо драйвер та завантажуємо сторінку
         driver = await fetch_driver(url, chrome_options, tg_id)
@@ -281,7 +351,9 @@ async def parser(url: str, tg_id: int):
             rows = await parse_rows(driver, tg_id)
 
             if not rows:
-                log_parsing_action(tg_id, "PARSING_FAILED", "No data found on page", url)
+                log_parsing_action(
+                    tg_id, "PARSING_FAILED", "No data found on page", url
+                )
                 return "Error"
 
             # Обробка даних
@@ -292,16 +364,20 @@ async def parser(url: str, tg_id: int):
 
             for row in rows:
                 # Відкидає контрактні заявки (тип 'К')
-                if row['app_type'].upper() == 'К':
+                if row["app_type"].upper() == "К":
                     continue
 
                 # Фільтрація по статусу
-                if not is_valid_status(row['status']):
+                if not is_valid_status(row["status"]):
                     continue
 
                 # Визначає чи є конкурент
                 competitor = is_competitor(
-                    row['score'], row['priority'], row['quota'], row['coefficient'], tg_id
+                    row["score"],
+                    row["priority"],
+                    row["quota"],
+                    row["coefficient"],
+                    tg_id,
                 )
 
                 if competitor:
@@ -310,43 +386,58 @@ async def parser(url: str, tg_id: int):
                     non_competitors_count += 1
 
                 # Генерує посилання
-                link = await generate_link(row['name'])
+                link = await generate_link(row["name"])
 
-                coeff = row['coefficient'] if row['coefficient'] else '-'
-                quota = row['quota'] if row['quota'] else '-'
+                coeff = row["coefficient"] if row["coefficient"] else "-"
+                quota = row["quota"] if row["quota"] else "-"
 
-                new_user_data.append({
-                    'name': row['name'],
-                    'status': row['status'],
-                    'priority': row['priority'],
-                    'score': row['score'],
-                    'detail': row['detail'],
-                    'coefficient': coeff,
-                    'quota': quota,
-                    'link': link,
-                    'competitor': competitor
-                })
+                new_user_data.append(
+                    {
+                        "name": row["name"],
+                        "status": row["status"],
+                        "priority": row["priority"],
+                        "score": row["score"],
+                        "detail": row["detail"],
+                        "coefficient": coeff,
+                        "quota": quota,
+                        "link": link,
+                        "competitor": competitor,
+                    }
+                )
 
-            log_parsing_step(tg_id, "DATA_PROCESSED",
-                           f"Processed data: {len(new_user_data)} total, {competitors_count} competitors, {non_competitors_count} non-competitors")
+            log_parsing_step(
+                tg_id,
+                "DATA_PROCESSED",
+                f"Processed data: {len(new_user_data)} total, {competitors_count} competitors, {non_competitors_count} non-competitors",
+            )
 
             # Оновлюється лічильник правильних активів для звичайних користувачів
             if tg_id not in ADMIN_ID:
                 await rq.update_user_right_activates(tg_id)
-                log_parsing_step(tg_id, "RIGHT_ACTIVATES_UPDATED", "User right activates counter updated")
+                log_parsing_step(
+                    tg_id,
+                    "RIGHT_ACTIVATES_UPDATED",
+                    "User right activates counter updated",
+                )
 
             # Зберігає дані в базу
-            log_parsing_step(tg_id, "SAVE_DATA", f"Saving {len(new_user_data)} records to database")
+            log_parsing_step(
+                tg_id, "SAVE_DATA", f"Saving {len(new_user_data)} records to database"
+            )
             await rq.set_user_data(tg_id=tg_id, new_user_data=new_user_data)
 
             # Логує успішне завершення
             end_time = time.time()
             processing_time = round(end_time - start_time, 2)
-            log_parsing_action(tg_id, "PARSING_COMPLETED",
-                             f"Parsing completed successfully in {processing_time}s. "
-                             f"Total records: {len(new_user_data)}, "
-                             f"Competitors: {competitors_count}, "
-                             f"Non-competitors: {non_competitors_count}", url)
+            log_parsing_action(
+                tg_id,
+                "PARSING_COMPLETED",
+                f"Parsing completed successfully in {processing_time}s. "
+                f"Total records: {len(new_user_data)}, "
+                f"Competitors: {competitors_count}, "
+                f"Non-competitors: {non_competitors_count}",
+                url,
+            )
 
         finally:
             # Закривається драйвер
@@ -356,6 +447,13 @@ async def parser(url: str, tg_id: int):
     except Exception as e:
         end_time = time.time()
         processing_time = round(end_time - start_time, 2)
-        log_error(e, f"Parsing failed for user {tg_id} after {processing_time}s. URL: {url}")
-        log_parsing_action(tg_id, "PARSING_FAILED", f"Parsing failed after {processing_time}s: {str(e)}", url)
+        log_error(
+            e, f"Parsing failed for user {tg_id} after {processing_time}s. URL: {url}"
+        )
+        log_parsing_action(
+            tg_id,
+            "PARSING_FAILED",
+            f"Parsing failed after {processing_time}s: {str(e)}",
+            url,
+        )
         raise

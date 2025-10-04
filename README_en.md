@@ -6,7 +6,7 @@
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Made in Ukraine](https://img.shields.io/badge/Made%20with%20❤️-in%20Ukraine-ffd700?style=flat&logo=flag&logoColor=blue)](https://t.me/NeShawyha)
 
-### 🌐 Language
+## 🌐 Language
 
 - [Українська](README.md)
 - [English](README_en.md)
@@ -19,13 +19,13 @@
 
 ## 📚 Table of Contents
 
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Dependencies](#dependencies)
-- [Configuration](#configuration)
-- [Author](#author)
-- [License](#license)
+- [Features](#-features)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [Dependencies](#-dependencies)
+- [Configuration](#️-configuration)
+- [Author](#-author)
+- [License](#-license)
 
 ---
 
@@ -45,16 +45,18 @@
 ## 🛠 Installation
 
 > **Requirements:**
+>
 > - Python 3.10+
 > - Docker + Docker Compose
 > - Telegram Bot Token
 
-### Steps:
+### Steps
 
 1. **Install Docker:**
    - [Official instructions](https://docs.docker.com/get-docker/)
 
 2. **Clone the repository:**
+
    ```bash
    git clone https://github.com/OlexiyOdarchuk/AbitAssistant_Bot.git
    cd AbitAssistant_Bot
@@ -65,6 +67,7 @@
    - Create `docker-compose.yml` based on `docker-compose.example.yml`
 
 4. **Start the project:**
+
    ```bash
    docker-compose up --build
    ```
@@ -133,35 +136,35 @@ If this bot helps you, consider supporting the author:
 
 The project follows a clear structure: key files are in the root, and all logic is within the `app/` folder. Full structure:
 
-📦 project_root/<br>
-├── [bot.py](./bot.py) — main bot launcher<br>
-├── config.py — main config file (created from [config.example.py](./config.example.py))<br>
-├── docker-compose.yml — Docker service config (based on [docker-compose.example.yml](./docker-compose.example.yml))<br>
-├── app/<br>
-│   ├── database/ — PostgreSQL + SQLAlchemy DB interaction<br>
-│   │   ├── [models.py](./app/database/models.py) — DB models<br>
-│   │   ├── [requests.py](./app/database/requests.py) — DB queries<br>
-│   ├── handlers/ — user command and message handling<br>
-│   │   ├── [__init__.py](./app/handlers/__init__.py) — package initializer<br>
-│   │   ├── [admin.py](./app/handlers/admin.py) — admin commands<br>
-│   │   ├── [common.py](./app/handlers/common.py) — general commands<br>
-│   │   ├── [filtering.py](./app/handlers/filtering.py) — data filtering<br>
-│   │   ├── [support.py](./app/handlers/support.py) — user feedback<br>
-│   │   ├── [viewing.py](./app/handlers/viewing.py) — view applicants<br>
-│   ├── services/ — core bot logic (parsing, analysis, generation)<br>
-│   │   ├── [applicants_len.py](./app/services/applicants_len.py) — applicant counter<br>
-│   │   ├── [parse_in_db.py](./app/services/parse_in_db.py) — parse, analyze, and store<br>
-│   │   ├── [generate_link.py](./app/services/generate_link.py) — link generation<br>
-│   │   ├── [mailing.py](./app/services/mailing.py) — mailings<br>
-│   │   ├── [support.py](./app/services/support.py) — feedback handling<br>
-│   │   ├── [user_management.py](./app/services/user_management.py) — user management<br>
-│   │   ├── [logger.py](./app/services/logger.py) — logging system<br>
-│   │   ├── [stats.py](./app/services/stats.py) — statistics<br>
-│   ├── [keyboards.py](./app/keyboards.py) — inline and reply keyboards<br>
-│   ├── [states.py](./app/states.py) — FSM states<br>
-│   ├── middleware/ — middleware components<br>
-│   │   ├── [__init__.py](./app/middleware/__init__.py) — package initializer<br>
-│   │   ├── [logging_middleware.py](./app/middleware/logging_middleware.py) — request logging<br>
+📦 project_root/  
+├── [bot.py](./bot.py) — main bot launcher  
+├── config.py — main config file (created from [config.example.py](./config.example.py))  
+├── docker-compose.yml — Docker service config (based on [docker-compose.example.yml](./docker-compose.example.yml))  
+├── app/  
+│   ├── database/ — PostgreSQL + SQLAlchemy DB interaction  
+│   │   ├── [models.py](./app/database/models.py) — DB models  
+│   │   ├── [requests.py](./app/database/requests.py) — DB queries  
+│   ├── handlers/ — user command and message handling  
+│   │   ├── [**init**.py](./app/handlers/__init__.py) — package initializer  
+│   │   ├── [admin.py](./app/handlers/admin.py) — admin commands  
+│   │   ├── [common.py](./app/handlers/common.py) — general commands  
+│   │   ├── [filtering.py](./app/handlers/filtering.py) — data filtering  
+│   │   ├── [support.py](./app/handlers/support.py) — user feedback  
+│   │   ├── [viewing.py](./app/handlers/viewing.py) — view applicants  
+│   ├── services/ — core bot logic (parsing, analysis, generation)  
+│   │   ├── [applicants_len.py](./app/services/applicants_len.py) — applicant counter  
+│   │   ├── [parse_in_db.py](./app/services/parse_in_db.py) — parse, analyze, and store  
+│   │   ├── [generate_link.py](./app/services/generate_link.py) — link generation  
+│   │   ├── [mailing.py](./app/services/mailing.py) — mailings  
+│   │   ├── [support.py](./app/services/support.py) — feedback handling  
+│   │   ├── [user_management.py](./app/services/user_management.py) — user management  
+│   │   ├── [logger.py](./app/services/logger.py) — logging system  
+│   │   ├── [stats.py](./app/services/stats.py) — statistics  
+│   ├── [keyboards.py](./app/keyboards.py) — inline and reply keyboards  
+│   ├── [states.py](./app/states.py) — FSM states  
+│   ├── middleware/ — middleware components  
+│   │   ├── [**init**.py](./app/middleware/__init__.py) — package initializer  
+│   │   ├── [logging_middleware.py](./app/middleware/logging_middleware.py) — request logging  
 
 ---
 

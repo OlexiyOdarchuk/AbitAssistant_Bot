@@ -16,7 +16,6 @@
 import os
 import sys
 import asyncio
-import logging
 import asyncpg
 from aiogram import Dispatcher
 from app.services.logger import setup_logger, log_system_event, log_error
@@ -41,7 +40,9 @@ dp = Dispatcher()
 
 
 async def wait_for_postgres(dsn: str, timeout: int = 30):
-    dsn_clean = dsn.replace("+asyncpg", "")  # asyncpg.connect не розуміє префікс SQLAlchemy
+    dsn_clean = dsn.replace(
+        "+asyncpg", ""
+    )  # asyncpg.connect не розуміє префікс SQLAlchemy
     for i in range(timeout):
         try:
             conn = await asyncpg.connect(dsn_clean)

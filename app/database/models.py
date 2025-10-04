@@ -24,23 +24,30 @@ engine = create_async_engine(url=DATABASE_URL)
 metadata = MetaData()
 async_session = async_sessionmaker(engine, expire_on_commit=False)
 
+
 class Base(AsyncAttrs, DeclarativeBase):
     metadata = metadata
+
 
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True)
-    user_data: Mapped[List["UserData"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    user_data: Mapped[List["UserData"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
     activates: Mapped[int] = mapped_column(Integer, default=0)
     right_activates: Mapped[int] = mapped_column(Integer, default=0)
+
 
 class UserData(Base):
     __tablename__ = "user_data"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_tg_id: Mapped[int] = mapped_column(ForeignKey("users.tg_id", ondelete="CASCADE"), nullable=False)
+    user_tg_id: Mapped[int] = mapped_column(
+        ForeignKey("users.tg_id", ondelete="CASCADE"), nullable=False
+    )
     name: Mapped[str] = mapped_column(String)
     status: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     priority: Mapped[int] = mapped_column(Integer)
@@ -54,7 +61,15 @@ class UserData(Base):
     user: Mapped["User"] = relationship(back_populates="user_data")
 
     __table_args__ = (
-        Index('user_data_index', 'user_tg_id', 'status', 'coefficient', 'quota', 'score', 'competitor'),
+        Index(
+            "user_data_index",
+            "user_tg_id",
+            "status",
+            "coefficient",
+            "quota",
+            "score",
+            "competitor",
+        ),
     )
 
     def as_dict(self):

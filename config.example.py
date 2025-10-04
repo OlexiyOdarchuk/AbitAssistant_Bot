@@ -17,16 +17,21 @@ import asyncio
 import os
 from aiogram import Bot
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # Якщо запускаєте через docker, обов'язково впишіть дані до docker-compose.yml
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "YOUR_TELEGRAM_TOKEN") # API Token телеграм бота
+TELEGRAM_TOKEN = os.getenv(
+    "TELEGRAM_TOKEN", "YOUR_TELEGRAM_TOKEN"
+)  # API Token телеграм бота
 
 # URL бази данних, вставте своє ім'я, пароль і назву бази даних
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://name:password@localhost:5432/name_db")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql+asyncpg://name:password@localhost:5432/name_db"
+)
 
-ADMIN_ID = [1234567890, 6587654321, 1122334455] # ID ваших Адміністраторів
+ADMIN_ID = [1234567890, 6587654321, 1122334455]  # ID ваших Адміністраторів
 
 # Семафор для обмеження кількості паралельних завдань, вписуйте сюди кількість, яку витримає сервер (не більше 3, бо не витримає selenium)
 MULTITASK = asyncio.Semaphore(2)

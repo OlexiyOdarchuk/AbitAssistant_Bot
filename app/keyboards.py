@@ -48,7 +48,8 @@ user_main = ReplyKeyboardMarkup(
 support = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="❌ До головного меню"), KeyboardButton(text="📤 Відправити"),
+            KeyboardButton(text="❌ До головного меню"),
+            KeyboardButton(text="📤 Відправити"),
         ],
     ],
     resize_keyboard=True,
@@ -61,7 +62,8 @@ return_back = ReplyKeyboardMarkup(
 about_us = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="💸 Донат 💸"), KeyboardButton(text="❌ До головного меню")
+            KeyboardButton(text="💸 Донат 💸"),
+            KeyboardButton(text="❌ До головного меню"),
         ],
     ],
     resize_keyboard=True,
@@ -70,17 +72,21 @@ about_us = ReplyKeyboardMarkup(
 mailing = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="📣 Відправити розсилку"), KeyboardButton(text="❌ До головного меню"),
+            KeyboardButton(text="📣 Відправити розсилку"),
+            KeyboardButton(text="❌ До головного меню"),
         ],
     ],
     resize_keyboard=True,
 )
 
-async def builder_applicant_all(tg_id:int, page:int) -> InlineKeyboardMarkup:
+
+async def builder_applicant_all(tg_id: int, page: int) -> InlineKeyboardMarkup:
     applicants = InlineKeyboardBuilder()
     data = await rq.get_user_data(tg_id)
 
-    user_applicants = [applicant for applicant in data if applicant.user_tg_id == tg_id] # абітурієнт додається, тільки якщо він є в базі даних конкретного користувача
+    user_applicants = [
+        applicant for applicant in data if applicant.user_tg_id == tg_id
+    ]  # абітурієнт додається, тільки якщо він є в базі даних конкретного користувача
 
     per_page = 10
     total_pages = (len(user_applicants) + per_page - 1) // per_page
@@ -93,32 +99,50 @@ async def builder_applicant_all(tg_id:int, page:int) -> InlineKeyboardMarkup:
     for applicants_all in current_page_applicants:
         applicant_name = " ".join(applicants_all.name.split(" ")[:2])
         applicants.button(
-                text=f"        👤 {applicant_name} | Бал: {applicants_all.score}        ",
-                callback_data=f'applicant_{applicants_all.id}'
-            )
+            text=f"        👤 {applicant_name} | Бал: {applicants_all.score}        ",
+            callback_data=f"applicant_{applicants_all.id}",
+        )
     applicants.adjust(1)
 
     nav_buttons = InlineKeyboardBuilder()
-    #Тут щас буде фігня з відступами. Ну немає в мене ідей і всьо, тільки якщо такими костилями
-    if page > 1: # Це умова, щоб додавати кнопку "◀️", тільки якщо є попередня сторінка
-        nav_buttons.button(text="        ◀️        ", callback_data=f"applicant_page_{page-1}")
-    nav_buttons.button(text=f"        {page}/{total_pages}        ", callback_data="applicant_back_to_stat")
-    if page < total_pages:# Це умова, щоб додавати кнопку "▶️", тільки якщо є наступна сторінка
-        nav_buttons.button(text="        ▶️        ", callback_data=f"applicant_page_{page+1}")
-    nav_buttons.adjust(3)# Це, щоб вони були в одному рядку
+    # Тут щас буде фігня з відступами. Ну немає в мене ідей і всьо, тільки якщо такими костилями
+    if page > 1:  # Це умова, щоб додавати кнопку "◀️", тільки якщо є попередня сторінка
+        nav_buttons.button(
+            text="        ◀️        ", callback_data=f"applicant_page_{page - 1}"
+        )
+    nav_buttons.button(
+        text=f"        {page}/{total_pages}        ",
+        callback_data="applicant_back_to_stat",
+    )
+    if (
+        page < total_pages
+    ):  # Це умова, щоб додавати кнопку "▶️", тільки якщо є наступна сторінка
+        nav_buttons.button(
+            text="        ▶️        ", callback_data=f"applicant_page_{page + 1}"
+        )
+    nav_buttons.adjust(3)  # Це, щоб вони були в одному рядку
 
     applicants.attach(nav_buttons)
 
     return applicants.as_markup()
 
-async def builder_applicant_competitors(tg_id:int, user_score:float, page:int) -> InlineKeyboardMarkup:
+
+async def builder_applicant_competitors(
+    tg_id: int, user_score: float, page: int
+) -> InlineKeyboardMarkup:
     applicants = InlineKeyboardBuilder()
     data = await rq.get_user_data(tg_id)
 
-    user_competitors = [applicant for applicant in data if applicant.user_tg_id == tg_id and applicant.competitor] # Конкурент додається, тільки якщо він є у базі данних конкретного користувача
+    user_competitors = [
+        applicant
+        for applicant in data
+        if applicant.user_tg_id == tg_id and applicant.competitor
+    ]  # Конкурент додається, тільки якщо він є у базі данних конкретного користувача
 
     per_page = 10
-    total_pages = (len(user_competitors) + per_page - 1) // per_page # Вираховує поточну кількість сторінок
+    total_pages = (
+        len(user_competitors) + per_page - 1
+    ) // per_page  # Вираховує поточну кількість сторінок
     page = max(1, min(page, total_pages))
 
     start = (page - 1) * per_page
@@ -128,18 +152,27 @@ async def builder_applicant_competitors(tg_id:int, user_score:float, page:int) -
     for competitors_all in current_page_competitors:
         competitor_name = " ".join(competitors_all.name.split(" ")[:2])
         applicants.button(
-                text=f"        👤 {competitor_name} | Бал: {competitors_all.score}        ",
-                callback_data=f'applicant_{competitors_all.id}'
-            )
+            text=f"        👤 {competitor_name} | Бал: {competitors_all.score}        ",
+            callback_data=f"applicant_{competitors_all.id}",
+        )
         applicants.adjust(1)
 
     nav_buttons = InlineKeyboardBuilder()
-    #Тут щас буде та сама фігня з відступами. Ну немає в мене ідей і всьо, тільки якщо такими костилями
-    if page > 1: # Це умова, щоб додавати кнопку "◀️", тільки якщо є попередня сторінка
-        nav_buttons.button(text="        ◀️        ", callback_data=f"competitors_page_{page-1}")
-    nav_buttons.button(text=f"        {page}/{total_pages}        ", callback_data="applicant_back_to_stat")
-    if page < total_pages: # Це умова, щоб додавати кнопку "▶️", тільки якщо є наступна сторінка
-        nav_buttons.button(text="        ▶️        ", callback_data=f"competitors_page_{page+1}")
+    # Тут щас буде та сама фігня з відступами. Ну немає в мене ідей і всьо, тільки якщо такими костилями
+    if page > 1:  # Це умова, щоб додавати кнопку "◀️", тільки якщо є попередня сторінка
+        nav_buttons.button(
+            text="        ◀️        ", callback_data=f"competitors_page_{page - 1}"
+        )
+    nav_buttons.button(
+        text=f"        {page}/{total_pages}        ",
+        callback_data="applicant_back_to_stat",
+    )
+    if (
+        page < total_pages
+    ):  # Це умова, щоб додавати кнопку "▶️", тільки якщо є наступна сторінка
+        nav_buttons.button(
+            text="        ▶️        ", callback_data=f"competitors_page_{page + 1}"
+        )
     nav_buttons.adjust(3)
 
     applicants.attach(nav_buttons)
@@ -149,6 +182,13 @@ async def builder_applicant_competitors(tg_id:int, user_score:float, page:int) -
 
 applicant_stat = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text='📋 Всі абітурієнти', callback_data="view_applicant_all"), InlineKeyboardButton(text="🎯 Тільки конкуренти", callback_data="view_applicant_competitors")]
+        [
+            InlineKeyboardButton(
+                text="📋 Всі абітурієнти", callback_data="view_applicant_all"
+            ),
+            InlineKeyboardButton(
+                text="🎯 Тільки конкуренти", callback_data="view_applicant_competitors"
+            ),
+        ]
     ]
 )

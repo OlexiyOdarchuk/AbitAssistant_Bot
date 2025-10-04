@@ -19,6 +19,7 @@ from aiogram.types import Message, CallbackQuery
 from app.services.logger import log_user_action, log_admin_action, log_error
 from config import ADMIN_ID
 
+
 class LoggingMiddleware(BaseMiddleware):
     """Middleware для автоматичного логування дій користувачів"""
 
@@ -26,14 +27,18 @@ class LoggingMiddleware(BaseMiddleware):
         self,
         handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
         event: Message | CallbackQuery,
-        data: Dict[str, Any]
+        data: Dict[str, Any],
     ) -> Any:
         try:
             # Логується вхідне повідомлення
             if isinstance(event, Message):
                 user_id = event.from_user.id
                 username = event.from_user.username
-                action = f"Sent message: {event.text[:50]}" if event.text else "Sent non-text message"
+                action = (
+                    f"Sent message: {event.text[:50]}"
+                    if event.text
+                    else "Sent non-text message"
+                )
 
                 if user_id in ADMIN_ID:
                     log_admin_action(user_id, action)
@@ -55,6 +60,6 @@ class LoggingMiddleware(BaseMiddleware):
 
         except Exception as e:
             # Логується помилка
-            user_id = event.from_user.id if hasattr(event, 'from_user') else 'unknown'
+            user_id = event.from_user.id if hasattr(event, "from_user") else "unknown"
             log_error(e, f"Error in handler for user {user_id}")
             raise
