@@ -14,7 +14,7 @@ aiohappyeyeballs==2.6.1
     # via
     #   aiohttp
     #   competition-check-telegram-bot (pyproject.toml)
-aiohttp==3.12.13
+aiohttp==3.12.14
     # via
     #   aiogram
     #   competition-check-telegram-bot (pyproject.toml)
