@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16
+    container_name: abitassistant_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  bot:
+    build: .
+    container_name: abitassistant_bot
+    shm_size: 1gb
+    depends_on:
+      - db
+    env_file:
+      - .env
+
+volumes:
+  pgdata:

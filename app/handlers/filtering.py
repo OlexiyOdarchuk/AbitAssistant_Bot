@@ -18,7 +18,7 @@ from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from urllib.parse import urlparse
 
-from app.services.parse_in_db import parser
+# from app.services.parse_in_db_OLD import parser
 from app.services.logger import (
     log_user_action,
     log_admin_action,
@@ -115,7 +115,9 @@ async def get_link(message: Message, state: FSMContext):
         log_user_action(user_id, username, "Entered URL", f"URL: {url}")
 
         parsed_url = urlparse(message.text)
-        if parsed_url.hostname == "vstup.osvita.ua":  # НЕ ЗАБУДЬ СЮДИ ВПИСАТИ y2025!!!!
+        if (
+            parsed_url.hostname == "vstup.osvita.ua"
+        ):  #! НЕ ЗАБУДЬ СЮДИ ВПИСАТИ y2026!!!!
             if "@" not in message.text:
                 log_user_action(
                     user_id, username, "URL validated", "Starting parsing process"
@@ -146,6 +148,7 @@ async def get_link(message: Message, state: FSMContext):
                         "Parsing started", f"User {user_id} started parsing URL: {url}"
                     )
 
+                    """
                     if await parser(url, user_id) == "Error":
                         log_user_action(
                             user_id,
@@ -158,6 +161,15 @@ async def get_link(message: Message, state: FSMContext):
                             reply_markup=kb.user_main,
                         )
                         return
+                    """
+
+                    #! ОБОВ'ЯЗКОВО ЦЕ ПОВЕРНУТИ
+
+                    await message.answer(
+                        "🧮 Зараз використовується версія, яка не парсить дані. Це версія підготовки до переходу на нову технологію парсингу, тому результату тут немає 🙂",
+                        reply_markup=kb.user_main,
+                    )
+                    return
 
                 except Exception as e:
                     log_error(e, f"Parsing exception for user {user_id}, URL: {url}")

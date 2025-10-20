@@ -13,3 +13,4 @@ docker-compose.example.yml
 
 # Virtual environments
 .venv
+.env

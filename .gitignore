@@ -12,8 +12,6 @@ wheels/
 
 #Private files
 test.py
-config.py
-docker-compose.yml
 
 # Log files
 logs/
