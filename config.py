@@ -12,7 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import asyncio
 import os
 from aiogram import Bot
@@ -20,20 +19,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Якщо запускаєте через docker, обов'язково впишіть дані до docker-compose.yml
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
-TELEGRAM_TOKEN = os.getenv(
-    "TELEGRAM_TOKEN", "YOUR_TELEGRAM_TOKEN"
-)  # API Token телеграм бота
-
-# URL бази данних, вставте своє ім'я, пароль і назву бази даних
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql+asyncpg://name:password@localhost:5432/name_db"
+    "DATABASE_URL",
+    f"postgresql+asyncpg://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}"
+    f"@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}",
 )
 
-ADMIN_ID = [1234567890, 6587654321, 1122334455]  # ID ваших Адміністраторів
+ADMIN_ID = [int(x.strip()) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()]
 
-# Семафор для обмеження кількості паралельних завдань, вписуйте сюди кількість, яку витримає сервер (не більше 3, бо не витримає selenium)
-MULTITASK = asyncio.Semaphore(2)
+MULTITASK = asyncio.Semaphore(int(os.getenv("MULTITASK", 2)))
 
 bot = Bot(token=TELEGRAM_TOKEN)
