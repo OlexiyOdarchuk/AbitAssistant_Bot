@@ -20,14 +20,14 @@ import asyncpg
 from aiogram import Dispatcher
 from app.services.logger import setup_logger, log_system_event, log_error
 
-if not os.path.exists("config.py"):
+if not os.path.exists(".env"):
     print(
-        "\nФайл config.py не знайдено!\n"
-        "Будь ласка, скопіюйте config.example.py у config.py та заповніть необхідні значення.\n"
+        "\nФайл .env не знайдено!\n"
+        "Будь ласка, скопіюйте .env.example у .env та заповніть необхідні значення.\n"
         "Команда для Linux/macOS:\n"
-        "  cp config.example.py config.py\n\n"
+        "  cp .env.example .env\n\n"
         "Команда для Windows:\n"
-        "  copy config.example.py config.py\n"
+        "  copy .env.example .env\n"
     )
     sys.exit(1)
 

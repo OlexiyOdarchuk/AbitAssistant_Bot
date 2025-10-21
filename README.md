@@ -6,11 +6,6 @@
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Made in Ukraine](https://img.shields.io/badge/Made%20with%20❤️-in%20Ukraine-ffd700?style=flat&logo=flag&logoColor=blue)](https://t.me/NeShawyha)
 
-## 🌐 Мова / Language
-
-- [Українська](README.md)
-- [English](README_en.md)
-
 ## 🧾 Опис
 
 **AbitAssistant_Bot** — це Telegram-бот для випускників 11 класів України, який автоматизує процес відстеження заяв абітурієнтів на вступ до ВНЗ. Бот реалізує техніку, описану у [цьому відео](https://www.youtube.com/watch?v=m5YfI8_2ONo), і значно економить час, показуючи конкурентів у зручному вигляді.
@@ -20,7 +15,6 @@
 ## 📚 Зміст
 
 - [AbitAssistant\_Bot](#abitassistant_bot)
-  - [🌐 Мова / Language](#-мова--language)
   - [🧾 Опис](#-опис)
   - [📚 Зміст](#-зміст)
   - [🧠 Функціонал](#-функціонал)
