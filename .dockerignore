@@ -10,7 +10,23 @@ wheels/
 test.py
 config.example.py
 docker-compose.example.yml
+*.md
+LICENSE
 
 # Virtual environments
 .venv
 .env
+
+# Log files
+logs/
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
