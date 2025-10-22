@@ -51,7 +51,6 @@
 
 > **Вимоги:**
 >
-> - Python 3.10+
 > - Docker + Docker Compose
 > - Telegram Bot Token
 

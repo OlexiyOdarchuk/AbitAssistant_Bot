@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import os
+import asyncio
 from aiogram import Bot
 from dotenv import load_dotenv
 
@@ -31,3 +32,5 @@ ADMIN_ID = [int(x.strip()) for x in os.getenv("ADMIN_IDS", "").split(",") if x.s
 API_URL = "https://vstup.osvita.ua/api/"
 
 bot = Bot(token=TELEGRAM_TOKEN)
+
+MULTITASK = asyncio.Semaphore(500)
