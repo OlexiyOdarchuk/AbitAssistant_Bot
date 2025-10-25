@@ -20,6 +20,8 @@ import json
 from config import API_URL
 from app.services.logger import log_parsing_action, log_parsing_step, log_error
 
+PAGE_SIZE = 500
+
 
 async def create_payload(url: str, last: int, tg_id: int) -> dict:
     """Функція, що генерує словник, який пізніше буде передаватися як запит для отримання посилання на json
@@ -230,7 +232,7 @@ async def parser(url: str, tg_id: int) -> dict:
                 for k, v in resp_data.get("requests_subjects", {}).items():
                     requests_subjects_dict[k] = v
 
-                last += 500
+                last += PAGE_SIZE
 
             data["requests"] = requests_list
             data["requests_subjects"] = requests_subjects_dict
@@ -239,4 +241,4 @@ async def parser(url: str, tg_id: int) -> dict:
 
     except Exception as e:
         log_error(e, f"[User {tg_id}] Error during parsing")
-        return {}
+        return None
