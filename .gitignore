@@ -11,7 +11,7 @@ wheels/
 .env
 
 #Private files
-test.py
+test*
 
 # Log files
 logs/
