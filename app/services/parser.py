@@ -212,10 +212,12 @@ async def parser(url: str, tg_id: int) -> dict:
         last = 0
 
         async with aiohttp.ClientSession() as session:
-            data = await parse_program_data(url, session, tg_id)  # Статична інформація
+            data = await parse_program_data(
+                url, session, tg_id
+            )  # Статична інформація про заклад освіти (там потім можна статистику з цього робити)
 
-            requests_list = []
-            requests_subjects_dict = {}
+            data.setdefault("requests", [])
+            data.setdefault("requests_subjects", {})
             while True:
                 payload = await create_payload(url, last, tg_id)
                 data_url = await get_url_json(session, payload, tg_id)
@@ -228,14 +230,13 @@ async def parser(url: str, tg_id: int) -> dict:
                 if not resp_data.get("requests"):
                     break
 
-                requests_list.extend(resp_data.get("requests"))
-                for k, v in resp_data.get("requests_subjects", {}).items():
-                    requests_subjects_dict[k] = v
+                data["requests"].extend(resp_data.get("requests"))
+
+                # З Python 3.9 додали новий синтаксис замість dict.update(), тепер можна писати |= і кайф буде)))
+                data["requests_subjects"] |= resp_data.get("requests_subjects", {})
 
                 last += PAGE_SIZE
 
-            data["requests"] = requests_list
-            data["requests_subjects"] = requests_subjects_dict
             log_parsing_action(tg_id, "Parsing completed successfully")
             return data
 

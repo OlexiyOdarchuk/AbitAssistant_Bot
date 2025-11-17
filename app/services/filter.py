@@ -6,17 +6,14 @@
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# but WITHOUT ANY WARRANTY; with[out even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List
 
-
-async def filter_data(tg_id: int, data: dict) -> List[dict]:
+async def filter_data(tg_id: int, data: dict) -> dict:
     """Функція приймає телеграм id, дані які треба профільтрувати і фільтрує їх за алгаритмом. Повертає результат фільтрації"""
-
-    # TODO: Написати функцію фільтрації за алгоритмом з відео.
+    # TODO
