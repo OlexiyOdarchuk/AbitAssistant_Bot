@@ -136,3 +136,20 @@ async def get_top_user() -> dict | None:
             return None
         tg_id, activates = top
         return {"tg_id": tg_id, "activates": activates or 0}
+
+
+async def get_nmt(tg_id: int) -> dict:
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        if not user:
+            raise Exception("User not found")
+        return user.nmt
+
+
+async def set_nmt(tg_id: int, nmt: dict) -> None:
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        if not user:
+            raise Exception("User not found")
+        user.nmt = nmt
+        await session.commit()

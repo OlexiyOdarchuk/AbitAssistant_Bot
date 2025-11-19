@@ -3,3 +3,4 @@ aiohttp==3.13.1
 asyncpg==0.30.0
 python-dotenv==1.1.1
 sqlalchemy==2.0.44
+bs4==0.0.2

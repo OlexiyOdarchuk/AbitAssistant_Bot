@@ -13,11 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import BigInteger, MetaData, Index, Integer, String, Boolean
+from sqlalchemy import BigInteger, MetaData, Index, Integer, String, Boolean, JSON
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from sqlalchemy.sql.schema import ForeignKey
-from typing import Optional, List
+from typing import Optional, List, Dict
 from config import DATABASE_URL
 
 engine = create_async_engine(url=DATABASE_URL)
@@ -37,6 +37,7 @@ class User(Base):
     user_data: Mapped[List["UserData"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    nmt: Mapped[Optional[Dict]] = mapped_column(JSON, nullable=True)
     activates: Mapped[int] = mapped_column(Integer, default=0)
     right_activates: Mapped[int] = mapped_column(Integer, default=0)
 
