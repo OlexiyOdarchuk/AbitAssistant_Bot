@@ -25,16 +25,16 @@ class Abiturient:
     priority: int = 0
     status: str = ""
     name: str = ""
-    bal: float = 0.0
+    score: float = 0.0
     quota: str = ""
     coef: str = ""
-    documents: str = ""
+    documents: bool = False
     rec_type: str = ""
-    state_education: str = ""
+    state_education: bool = False
     other_req: int = 0
     abit_link: str = ""
     calc_link: str = ""
-    nmt_bals: dict = field(default_factory=dict)
+    detail_scores: dict = field(default_factory=dict)
 
 
 class AbiturientDecoder:
@@ -46,7 +46,7 @@ class AbiturientDecoder:
     PRIORITY = 2
     STATUS = 3
     NAME = 4
-    BAL = 5
+    SCORE = 5
     QUOTA1 = 6
     QUOTA2 = 7
     QUOTA3 = 8
@@ -78,26 +78,29 @@ class AbiturientDecoder:
             data: Словник з даними абітурієнтів
             tg_id: Telegram ID користувача
         """
-        self.tg_id = tg_id
-        self.data = data.copy()
+        try:
+            self.tg_id = tg_id
+            self.data = data.copy()
 
-        # Загальні параметри
-        self.statuses = self.data.get("statuses", {})
-        self.rec_types = self.data.get("rec_types", {})
-        self.requests_raw = self.data.get("requests", [])
-        self.subjects_data = self.data.get("subjects_js", [])
-        self.requests_subjects = self.data.get("requests_subjects", {})
+            # Загальні параметри
+            self.statuses = self.data.get("statuses", {})
+            self.rec_types = self.data.get("rec_types", {})
+            self.requests_raw = self.data.get("requests", [])
+            self.subjects_data = self.data.get("subjects_js", [])
+            self.requests_subjects = self.data.get("requests_subjects", {})
 
-        self.nmts = set(self.data.get("nmts", []))
-        self.subid4 = set(i for i in self.data.get("sub4ar", []) if i != 0)
+            self.nmts = set(self.data.get("nmts", []))
+            self.subid4 = set(i for i in self.data.get("sub4ar", []) if i != 0)
 
-        self.k4max = float(self.data.get("k4max", 0.35))
-        self.eb = self.data.get("eb", 40)
-        self.rk = self.data.get("rk", 1.0)
-        self.okr = self.data.get("okr", 1)
-        self._add_subject_coefficients()
+            self.k4max = float(self.data.get("k4max", 0.35))
+            self.eb = self.data.get("eb", 40)
+            self.rk = self.data.get("rk", 1.0)
+            self.okr = self.data.get("okr", 1)
+            self._add_subject_coefficients()
+        except Exception as e:
+            log_error("Error decoder init", e)
 
-    async def decode(self) -> dict:
+    def decode(self) -> dict:
         """
         Декодує та обробляє всі дані абітурієнтів.
 
@@ -139,7 +142,7 @@ class AbiturientDecoder:
                     new_abit.name, self.tg_id
                 )
                 new_abit.calc_link = generate_link.generate_calc_link(
-                    subjson, new_abit.bal, self.eb, self.okr, self.tg_id
+                    subjson, new_abit.score, self.eb, self.okr, self.tg_id
                 )
 
                 self.data["requests"][new_abit.id] = asdict(new_abit)
@@ -175,9 +178,9 @@ class AbiturientDecoder:
             num=abit[self.NUM],
             priority=max(abit[self.PRIORITY], 0),
             name=abit[self.NAME],
-            bal=abit[self.BAL],
-            documents="+" if abit[self.DOCUMENTS] == 1 else "-",
-            state_education="Б" if abit[self.STATE_EDUCATION] == 1 else "К",
+            score=abit[self.SCORE],
+            documents=True if abit[self.DOCUMENTS] == 1 else False,
+            state_education=True if abit[self.STATE_EDUCATION] == 1 else False,
             other_req=(
                 abit[self.OTHER_REQ]
                 if abit[self.OTHER_REQ]
@@ -234,27 +237,19 @@ class AbiturientDecoder:
         quotas = []
 
         if abit[self.QUOTA1]:
-            quotas.append("Квота 1")
+            quotas.append("КВ1")
         if abit[self.QUOTA2]:
-            quotas.append("Квота 2")
+            quotas.append("КВ2")
         if abit[self.QUOTA3]:
-            quotas.append("Квота 3")
+            quotas.append("КВ3")
         if abit[self.INTERVIEW]:
-            quotas.append("Вступ за результатами співбесіди")
+            quotas.append("СБ")
 
         return ", ".join(quotas)
 
     def _get_coefficients(self, abit: list) -> str:
         """
-        Обробляє бали НМТ, міжнародні олімпіади та додаткові бали,
-        формує subjson і словник nmt_bals для абітурієнта.
-
-        Args:
-            new_abit: об'єкт Abiturient, якому будуть додані бали
-            abit: список сирих даних абітурієнта
-
-        Returns:
-            list: список словників subjson для розрахунку балів
+        Обробляє і формує коефіцієнти
         """
         coefs = []
 
@@ -287,6 +282,8 @@ class AbiturientDecoder:
         subjson = []
 
         for subject in self.subjects_data:
+            if subject.get("s") == "Мотиваційний лист":
+                continue
             sid = str(subject.get("id"))
             if sid not in received_points:
                 continue
@@ -314,7 +311,7 @@ class AbiturientDecoder:
                 subjson.append(entry)
 
             # Збереження балів НМТ
-            new_abit.nmt_bals[subject.get("s")] = ball
+            new_abit.detail_scores[subject.get("s")] = ball
 
         return subjson
 
@@ -346,7 +343,8 @@ class AbiturientDecoder:
         """
         self.data["subject_coefficients"] = {"k4max": self.k4max}
         for subject in self.data.get("subjects_js"):
-            self.data["subject_coefficients"][subject["s"]] = subject["k"]
+            if subject.get("s") != "Мотиваційний лист":
+                self.data["subject_coefficients"][subject["s"]] = subject["k"]
 
     def _cleanup_temp_data(self) -> None:
         """
@@ -369,7 +367,7 @@ class AbiturientDecoder:
 
 
 # Обгортка для простоти
-async def decoder(data: dict, tg_id: int) -> dict:
+def decoder(data: dict, tg_id: int) -> dict:
     """
     Декодує та обробляє дані абітурієнтів.
 
@@ -381,4 +379,4 @@ async def decoder(data: dict, tg_id: int) -> dict:
         Оброблений словник з даними
     """
     decoder_instance = AbiturientDecoder(data, tg_id)
-    return await decoder_instance.decode()
+    return decoder_instance.decode()

@@ -9,6 +9,7 @@ dependencies = [
     "aiohttp==3.12.13",
     "asyncpg==0.30.0",
     "bs4>=0.0.2",
+    "pandas>=2.3.3",
     "python-dotenv==1.1.1",
     "sqlalchemy==2.0.41",
 ]
