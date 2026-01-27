@@ -31,6 +31,8 @@ ADMIN_ID = [int(x.strip()) for x in os.getenv("ADMIN_IDS", "").split(",") if x.s
 
 API_URL = "https://vstup.osvita.ua/api/"
 
+ABIT_POISK_API_URL = "https://abit-poisk.org.ua/api/statements"
+
 bot = Bot(token=TELEGRAM_TOKEN)
 
 MULTITASK = asyncio.Semaphore(500)

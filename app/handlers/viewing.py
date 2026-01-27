@@ -257,6 +257,9 @@ async def all_info(callback: CallbackQuery):
 
         await callback.answer()
         data = await rq.get_user_data(user_id)
+        program_info = await rq.get_user_program_info(user_id)
+        subjects_map = program_info.get("subjects_map", {})
+
         applicant_id = int(callback.data.split("_")[-1])
         applicants = [
             applicant for applicant in data if applicant.user_tg_id == user_id
@@ -271,33 +274,28 @@ async def all_info(callback: CallbackQuery):
                     f"Applicant: {applicant.name}, ID: {applicant_id}",
                 )
 
-                display_quota = applicant.quota if applicant.quota else "-"
-                display_coefficient = (
-                    applicant.coefficient if applicant.coefficient else "-"
-                )
-                formatted_detail = "-"
-                if applicant.detail:
-                    formatted_detail = re.sub(
-                        r"([А-ЯІЇЄA-Zа-яіїєҐґ\s]+?)(\d{2,3})(?=[А-ЯІЇЄA-Z])",
-                        r"\1: \2\n",
-                        applicant.detail,
-                    ).strip()  # ([А-ЯІЇЄA-Zа-яіїєҐґ\s]+?) - ловить назву, (\d{2,3}) - ловить число, (?=[А-ЯІЇЄA-Z]) - після числа повинно бути велика літера
+                formatted_detail = ""
+                if applicant.subjects:
+                    for sub_id, values in applicant.subjects.items():
+                        # values is [score, flag, flag]
+                        score_val = values[0] if isinstance(values, list) and len(values) > 0 else 0
+                        sub_name = subjects_map.get(str(sub_id), f"Предмет {sub_id}")
+                        formatted_detail += f"{sub_name}: {score_val}\n"
+                else:
+                    formatted_detail = "-"
+
                 await callback.message.answer(
                     f"""📄 Повна інформація про абітурієнта:
 
 👤 ПІП: {applicant.name}
 📄 Статус заяви: {applicant.status}
 🎯 Пріоритет на освітню програму: {applicant.priority}
-📈 Коефіцієнтний бал на спеціальність: {applicant.score if applicant.score else "-"}
+📈 Конкурсний бал: {applicant.score if applicant.score else "-"}
 
 📚 Бали НМТ:
 {formatted_detail}
 
-⚖️ Коефіцієнт: {display_coefficient}
-🏷️ Квота: {display_quota}
 🔍 Конкурентність: {"✅ Конкурент" if applicant.competitor else "❌ Не конкурент"}
-🔗 Посилання на абіт-пошук:
-{applicant.link if applicant.link else "-"}
 """
                 )
                 break

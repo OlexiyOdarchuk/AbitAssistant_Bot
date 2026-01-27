@@ -23,12 +23,13 @@ import app.database.requests as rq
 import app.keyboards as kb
 from config import ADMIN_ID, bot
 from app.services.logger import log_user_action, log_admin_action, log_error
+from app.states import States as st
 
 router = Router()
 
 
 @router.message(CommandStart())
-async def start(message: Message):
+async def start(message: Message, state: FSMContext):
     try:
         if message.from_user.id in ADMIN_ID:
             log_admin_action(message.from_user.id, "Started bot")
@@ -61,9 +62,10 @@ P.S. Якщо у вас 200 хоча б з одного, або з усіх пр
             )
 
             await message.answer(
-                "Ви в головному меню.\nДля координації по боту скористайтеся кнопками нижче 👇",
-                reply_markup=kb.user_main,
+                "Почнемо з простого🤔: введіть свої бали з НМТ😃\n",
             )
+            await state.set_data(st.get_info)
+
     except Exception as e:
         log_error(e, f"Error in start command for user {message.from_user.id}")
 
@@ -133,7 +135,7 @@ async def about_us(message: Message):
 
 💡 Так з'явилась ідея створити телеграм-бота.
 
-👀 Відео, на основі якого був створений бот:
+👀 Відео, на основі якого був створений алгоритм для сортування:
 https://www.youtube.com/watch?v=m5YfI8_2ONo
 
 👨‍💻 Стара версія з Tkinter:
@@ -160,3 +162,6 @@ https://github.com/OlexiyOdarchuk/AbitAssistant_bot"""
         )
     except Exception as e:
         log_error(e, f"Error in about_us command for user {message.from_user.id}")
+
+
+# В головне меню додати кнопку "встановити бали нмт" і може додати ще "інформація про мене" де буде статистика і бали нмт, а також приймати ті бали коли людина тільки-тільки реєструється

@@ -15,6 +15,7 @@ services:
   bot:
     build: .
     container_name: abitassistant_bot
+    restart: always
     shm_size: 1gb
     depends_on:
       - db
