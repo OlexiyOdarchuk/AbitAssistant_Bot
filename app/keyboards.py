@@ -22,7 +22,7 @@ from aiogram.types import (
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-import app.database.requests as rq
+from app.services.results_cache import get_result
 
 remove_keyboard = ReplyKeyboardRemove()
 
@@ -32,6 +32,7 @@ admin_main = ReplyKeyboardMarkup(
         [KeyboardButton(text="💸 Донат 💸"), KeyboardButton(text="📑 Про нас 📑")],
         [KeyboardButton(text="📣 Розсилка"), KeyboardButton(text="📊 Статистика")],
         [KeyboardButton(text="👥 Користувачі"), KeyboardButton(text="📋 Логи")],
+        [KeyboardButton(text="👤 Мій профіль")],
     ],
     resize_keyboard=True,
 )
@@ -40,7 +41,7 @@ user_main = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="🧠 Розпочати аналіз та фільтрацію 📊")],
         [KeyboardButton(text="💸 Донат 💸"), KeyboardButton(text="📑 Про нас 📑")],
-        [KeyboardButton(text="👤 Зв'язок з адміністрацією 👤")],
+        [KeyboardButton(text="👤 Зв'язок з адміністрацією 👤"), KeyboardButton(text="👤 Мій профіль")],
     ],
     resize_keyboard=True,
 )
@@ -79,48 +80,137 @@ mailing = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
+# --- Profile Keyboards ---
+
+def get_subjects_kb(filled_subjects: dict) -> ReplyKeyboardMarkup:
+    """Генерує клавіатуру предметів, позначаючи вже введені."""
+    subjects = [
+        "Українська мова", "Математика",
+        "Історія України", "Англійська мова",
+        "Біологія", "Фізика",
+        "Хімія", "Географія",
+        "Українська література", "Інша іноземна"
+    ]
+    
+    buttons = []
+    row = []
+    for subj in subjects:
+        text = subj
+        if subj in filled_subjects:
+            text = f"✅ {subj}"
+        
+        row.append(KeyboardButton(text=text))
+        if len(row) == 2:
+            buttons.append(row)
+            row = []
+            
+    if row:
+        buttons.append(row)
+        
+    buttons.append([KeyboardButton(text="✅ Завершити введення"), KeyboardButton(text="❌ До головного меню")])
+    
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+
+
+settings_kb = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="🎟 Квоти", callback_data="settings_quotas")],
+        [InlineKeyboardButton(text="🌍 Регіональний коефіцієнт", callback_data="settings_region")],
+        [InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_profile")],
+    ]
+)
+
+def get_quotas_kb(active_quotas: list) -> InlineKeyboardMarkup:
+    k1_text = "✅ Квота 1" if "kv1" in active_quotas else "Квота 1"
+    k2_text = "✅ Квота 2" if "kv2" in active_quotas else "Квота 2"
+    
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=k1_text, callback_data="toggle_quota_kv1")],
+            [InlineKeyboardButton(text=k2_text, callback_data="toggle_quota_kv2")],
+            [InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_settings")],
+        ]
+    )
+
+def get_region_kb(is_active: bool) -> InlineKeyboardMarkup:
+    text = "✅ Увімкнено" if is_active else "❌ Вимкнено"
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=text, callback_data="toggle_region_coef")],
+            [InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_settings")],
+        ]
+    )
+
+def edit_or_delete_subject_kb(subject: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="✏️ Змінити бал", callback_data=f"edit_subj_{subject}")],
+            [InlineKeyboardButton(text="🗑 Видалити предмет", callback_data=f"del_subj_{subject}")],
+            [InlineKeyboardButton(text="🔙 Скасувати", callback_data="cancel_subj_edit")],
+        ]
+    )
+
+
+profile_main = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="📝 Редагувати НМТ", callback_data="edit_nmt")],
+        [InlineKeyboardButton(text="⚙️ Налаштування (Квоти/РК)", callback_data="edit_settings")],
+        [InlineKeyboardButton(text="📂 Збережені списки", callback_data="saved_lists")],
+    ]
+)
+
 
 async def builder_applicant_all(tg_id: int, page: int) -> InlineKeyboardMarkup:
     applicants = InlineKeyboardBuilder()
-    data = await rq.get_user_data(tg_id)
+    
+    result = get_result(tg_id)
+    if not result:
+        # Якщо кеш пустий, повертаємо порожню клавіатуру з кнопкою назад
+        return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Дані втрачено. Почніть спочатку", callback_data="applicant_back_to_stat")]])
 
-    user_applicants = [
-        applicant for applicant in data if applicant.user_tg_id == tg_id
-    ]  # абітурієнт додається, тільки якщо він є в базі даних конкретного користувача
+    competitors = result.get("requests", {}).get("competitors", {})
+    non_competitors = result.get("requests", {}).get("non-competitors", {})
+    
+    # Об'єднуємо всіх, зберігаючи ID як ключі
+    all_list = [(app_id, app) for app_id, app in competitors.items()] + [(app_id, app) for app_id, app in non_competitors.items()]
+    # Сортуємо за балом (спадання)
+    all_list.sort(key=lambda x: x[1].get("score", 0), reverse=True)
 
     per_page = 10
-    total_pages = (len(user_applicants) + per_page - 1) // per_page
+    total_pages = (len(all_list) + per_page - 1) // per_page
+    if total_pages == 0: total_pages = 1
     page = max(1, min(page, total_pages))
 
     start = (page - 1) * per_page
     end = start + per_page
-    current_page_applicants = user_applicants[start:end]
+    current_page_applicants = all_list[start:end]
 
-    for applicants_all in current_page_applicants:
-        applicant_name = " ".join(applicants_all.name.split(" ")[:2])
+    for applicant_id, app in current_page_applicants:
+        applicant_name = " ".join(app.get("name", "").split(" ")[:2])
+        score = app.get("score", 0)
+        # Маркуємо, якщо це конкурент (перевіримо обидва формати ключа)
+        marker = "🔴" if (applicant_id in competitors or str(applicant_id) in competitors) else "🟢"
+        
         applicants.button(
-            text=f"        👤 {applicant_name} | Бал: {applicants_all.score}        ",
-            callback_data=f"applicant_{applicants_all.id}",
+            text=f"{marker} {applicant_name} | {score}",
+            callback_data=f"applicant_{applicant_id}",
         )
     applicants.adjust(1)
 
     nav_buttons = InlineKeyboardBuilder()
-    # Тут щас буде фігня з відступами. Ну немає в мене ідей і всьо, тільки якщо такими костилями
-    if page > 1:  # Це умова, щоб додавати кнопку "◀️", тільки якщо є попередня сторінка
+    if page > 1:
         nav_buttons.button(
-            text="        ◀️        ", callback_data=f"applicant_page_{page - 1}"
+            text="◀️", callback_data=f"applicant_page_{page - 1}"
         )
     nav_buttons.button(
-        text=f"        {page}/{total_pages}        ",
+        text=f"{page}/{total_pages}",
         callback_data="applicant_back_to_stat",
     )
-    if (
-        page < total_pages
-    ):  # Це умова, щоб додавати кнопку "▶️", тільки якщо є наступна сторінка
+    if page < total_pages:
         nav_buttons.button(
-            text="        ▶️        ", callback_data=f"applicant_page_{page + 1}"
+            text="▶️", callback_data=f"applicant_page_{page + 1}"
         )
-    nav_buttons.adjust(3)  # Це, щоб вони були в одному рядку
+    nav_buttons.adjust(3)
 
     applicants.attach(nav_buttons)
 
@@ -131,53 +221,68 @@ async def builder_applicant_competitors(
     tg_id: int, user_score: float, page: int
 ) -> InlineKeyboardMarkup:
     applicants = InlineKeyboardBuilder()
-    data = await rq.get_user_data(tg_id)
+    
+    result = get_result(tg_id)
+    if not result:
+        return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Дані втрачено", callback_data="applicant_back_to_stat")]])
 
-    user_competitors = [
-        applicant
-        for applicant in data
-        if applicant.user_tg_id == tg_id and applicant.competitor
-    ]  # Конкурент додається, тільки якщо він є у базі данних конкретного користувача
+    competitors = result.get("requests", {}).get("competitors", {})
+    
+    comp_list = [(app_id, app) for app_id, app in competitors.items()]
+    # Сортуємо за балом
+    comp_list.sort(key=lambda x: x[1].get("score", 0), reverse=True)
 
     per_page = 10
-    total_pages = (
-        len(user_competitors) + per_page - 1
-    ) // per_page  # Вираховує поточну кількість сторінок
+    total_pages = (len(comp_list) + per_page - 1) // per_page
+    if total_pages == 0: total_pages = 1
     page = max(1, min(page, total_pages))
 
     start = (page - 1) * per_page
     end = start + per_page
-    current_page_competitors = user_competitors[start:end]
+    current_page_competitors = comp_list[start:end]
 
-    for competitors_all in current_page_competitors:
-        competitor_name = " ".join(competitors_all.name.split(" ")[:2])
+    for applicant_id, app in current_page_competitors:
+        applicant_name = " ".join(app.get("name", "").split(" ")[:2])
         applicants.button(
-            text=f"        👤 {competitor_name} | Бал: {competitors_all.score}        ",
-            callback_data=f"applicant_{competitors_all.id}",
+            text=f"🔴 {applicant_name} | {app.get('score', 0)}",
+            callback_data=f"applicant_{applicant_id}",
         )
         applicants.adjust(1)
 
     nav_buttons = InlineKeyboardBuilder()
-    # Тут щас буде та сама фігня з відступами. Ну немає в мене ідей і всьо, тільки якщо такими костилями
-    if page > 1:  # Це умова, щоб додавати кнопку "◀️", тільки якщо є попередня сторінка
+    if page > 1:
         nav_buttons.button(
-            text="        ◀️        ", callback_data=f"competitors_page_{page - 1}"
+            text="◀️", callback_data=f"competitors_page_{page - 1}"
         )
     nav_buttons.button(
-        text=f"        {page}/{total_pages}        ",
+        text=f"{page}/{total_pages}",
         callback_data="applicant_back_to_stat",
     )
-    if (
-        page < total_pages
-    ):  # Це умова, щоб додавати кнопку "▶️", тільки якщо є наступна сторінка
+    if page < total_pages:
         nav_buttons.button(
-            text="        ▶️        ", callback_data=f"competitors_page_{page + 1}"
+            text="▶️", callback_data=f"competitors_page_{page + 1}"
         )
     nav_buttons.adjust(3)
 
     applicants.attach(nav_buttons)
 
     return applicants.as_markup()
+
+
+def builder_applicant_details(applicant_id: int, is_threat: bool) -> InlineKeyboardMarkup:
+    """Клавіатура для деталей абітурієнта з можливістю тогла."""
+    kb = InlineKeyboardBuilder()
+    
+    # Кнопка перемикання
+    if is_threat:
+        kb.button(text="❌ Це не конкурент", callback_data=f"toggle_threat_{applicant_id}")
+    else:
+        kb.button(text="✅ Вважати конкурентом", callback_data=f"toggle_threat_{applicant_id}")
+    
+    kb.button(text="📋 Інші заяви", callback_data=f"show_abit_history_{applicant_id}")
+    kb.button(text="⬅️ Назад до списку", callback_data="applicant_back_to_list") # Повертає туди, звідки прийшли (All або Competitors)
+    kb.adjust(1)
+    return kb.as_markup()
 
 
 applicant_stat = InlineKeyboardMarkup(
@@ -189,6 +294,11 @@ applicant_stat = InlineKeyboardMarkup(
             InlineKeyboardButton(
                 text="🎯 Тільки конкуренти", callback_data="view_applicant_competitors"
             ),
+        ],
+        [
+            InlineKeyboardButton(
+                text="💾 Зберегти список", callback_data="save_list"
+            )
         ]
     ]
 )

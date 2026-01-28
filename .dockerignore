@@ -15,7 +15,6 @@ LICENSE
 
 # Virtual environments
 .venv
-.env
 
 # Log files
 logs/

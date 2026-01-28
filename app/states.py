@@ -26,3 +26,12 @@ class States(StatesGroup):
     choice_list = State()
     view_all = State()
     view_competitors = State()
+
+
+class ProfileStates(StatesGroup):
+    choose_subject = State()
+    enter_score = State()
+    confirm_nmt = State()
+    choose_quota = State()
+    choose_region_coef = State()
+    enter_creative_score = State()

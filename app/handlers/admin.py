@@ -52,6 +52,7 @@ async def mailing(message: Message, state: FSMContext):
         await mail.mailing(message, state)
     except Exception as e:
         log_error(e, f"Error in mailing command for admin {message.from_user.id}")
+        await message.answer("❌ Помилка при розсилці")
 
 
 @router.message(st.get_mailing)
@@ -68,6 +69,7 @@ async def get_mailing_text(message: Message, state: FSMContext):
         await mail.get_mailing_text(message, state)
     except Exception as e:
         log_error(e, f"Error in get_mailing_text for admin {message.from_user.id}")
+        await message.answer("❌ Помилка при обробці тексту")
 
 
 @router.message(st.init_mailing, F.text == "📣 Відправити розсилку")
@@ -80,6 +82,7 @@ async def init(message: Message, state: FSMContext):
         await mail.init(message, state)
     except Exception as e:
         log_error(e, f"Error in init mailing for admin {message.from_user.id}")
+        await message.answer("❌ Помилка при відправці розсилки")
 
 
 @router.message(F.text == "📊 Статистика")
@@ -92,6 +95,7 @@ async def statistics(message: Message):
         await message.answer(await stats.admin_statistics())
     except Exception as e:
         log_error(e, f"Error in statistics command for admin {message.from_user.id}")
+        await message.answer("❌ Помилка при отриманні статистики")
 
 
 @router.message(F.text == "👥 Користувачі")

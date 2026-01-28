@@ -16,7 +16,7 @@
 import time
 import json
 import base64
-from logger import log_parsing_action
+from app.services.logger import log_parsing_action
 
 
 def generate_abit_poisk_link(name: str, tg_id: int) -> str:

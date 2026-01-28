@@ -35,4 +35,4 @@ ABIT_POISK_API_URL = "https://abit-poisk.org.ua/api/statements"
 
 bot = Bot(token=TELEGRAM_TOKEN)
 
-MULTITASK = asyncio.Semaphore(500)
+MULTITASK = asyncio.Semaphore(10)

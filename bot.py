@@ -34,9 +34,35 @@ if not os.path.exists(".env"):
 from config import bot, DATABASE_URL
 from app.handlers import setup_routers
 from app.database.models import async_main
+from app.middleware.logging_middleware import LoggingMiddleware
 
 
 dp = Dispatcher()
+
+
+async def error_handler(update, exception):
+    """Global error handler for unexpected exceptions"""
+    try:
+        if hasattr(update, 'message') and update.message:
+            user_id = update.message.from_user.id
+            try:
+                await bot.send_message(
+                    user_id,
+                    "❌ Сталася непередбачена помилка. Адміністратори були сповіщені.\n"
+                    "Спробуйте ще раз або скористайтесь командою /start",
+                )
+            except:
+                pass
+        elif hasattr(update, 'callback_query') and update.callback_query:
+            user_id = update.callback_query.from_user.id
+            try:
+                await update.callback_query.answer("❌ Помилка обробки. Спробуйте ще раз.", show_alert=True)
+            except:
+                pass
+        
+        log_error(exception, f"Global handler error for user")
+    except Exception as e:
+        log_error(e, "Error in global error handler")
 
 
 async def wait_for_postgres(dsn: str, timeout: int = 30):
@@ -61,6 +87,8 @@ async def main():
         await wait_for_postgres(DATABASE_URL)
         await async_main()
         setup_routers(dp)
+        dp.message.middleware(LoggingMiddleware())
+        dp.callback_query.middleware(LoggingMiddleware())
         log_system_event("Bot started successfully")
         await dp.start_polling(bot)
     except Exception as e:

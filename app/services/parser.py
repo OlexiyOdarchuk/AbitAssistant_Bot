@@ -37,7 +37,11 @@ async def create_payload(url: str, last: int, tg_id: int) -> dict:
         data = url.strip("/").split("/")
         sid = data[-1]
         uid = data[-2]
-        y = data[-4][1:]
+        y = data[-4][1:] # y2025 -> 2025
+        
+        if not y.isdigit():
+             raise ValueError(f"Could not extract year from URL: {url}")
+
         payload = {
             "action": "requests",
             "y": y,
@@ -222,15 +226,21 @@ async def parser(url: str, tg_id: int) -> dict:
                 payload = await create_payload(url, last, tg_id)
                 data_url = await get_url_json(session, payload, tg_id)
                 if not data_url:
+                    log_parsing_step(tg_id, "No data URL returned")
                     break
 
+                log_parsing_step(tg_id, f"Fetching data from JSON URL: {data_url}")
                 async with session.get(data_url) as resp:
                     resp_data = await resp.json()
+                
+                requests_list = resp_data.get("requests", [])
+                log_parsing_step(tg_id, f"Received chunk with {len(requests_list)} requests")
 
-                if not resp_data.get("requests"):
+                if not requests_list:
+                    log_parsing_step(tg_id, "Empty requests list in chunk, stopping")
                     break
 
-                data["requests"].extend(resp_data.get("requests"))
+                data["requests"].extend(requests_list)
 
                 # З Python 3.9 додали новий синтаксис замість dict.update(), тепер можна писати |= і кайф буде)))
                 data["requests_subjects"] |= resp_data.get("requests_subjects", {})

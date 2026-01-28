@@ -14,8 +14,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 from dataclasses import dataclass, asdict, field
-import generate_link
-from logger import log_parsing_action, log_error
+import app.services.generate_link as generate_link
+from app.services.logger import log_parsing_action, log_error
 
 
 @dataclass

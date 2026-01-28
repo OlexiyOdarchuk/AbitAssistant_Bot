@@ -14,26 +14,29 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import app.database.requests as rq
+from app.services.results_cache import get_result
 
+# Для сумісності залишаємо словник (хоча краще зберігати це теж в results_cache)
 user_score = {}
 
 
 async def all_applicant_len(tg_id: int) -> int:
-    """Рахує загальну кількість заявок."""
-    data = await rq.get_user_data(tg_id)
-    user_applicants = [applicant for applicant in data if applicant.user_tg_id == tg_id]
-    return len(user_applicants)
+    """Рахує загальну кількість заявок з кешу."""
+    result = get_result(tg_id)
+    if not result:
+        return 0
+    competitors = result.get("requests", {}).get("competitors", {})
+    non_competitors = result.get("requests", {}).get("non-competitors", {})
+    return len(competitors) + len(non_competitors)
 
 
 async def competitors_applicant_len(tg_id: int) -> int:
-    """Рахує кількість заявок конкурентів."""
-    data = await rq.get_user_data(tg_id)
-    user_applicants = [
-        applicant
-        for applicant in data
-        if applicant.user_tg_id == tg_id and applicant.competitor
-    ]
-    return len(user_applicants)
+    """Рахує кількість заявок конкурентів з кешу."""
+    result = get_result(tg_id)
+    if not result:
+        return 0
+    competitors = result.get("requests", {}).get("competitors", {})
+    return len(competitors)
 
 
 async def admin_statistics() -> str:

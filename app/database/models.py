@@ -13,12 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import BigInteger, MetaData, Index, Integer, String, Boolean, JSON
+from sqlalchemy import BigInteger, MetaData, Integer, String, JSON, DateTime, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
-from sqlalchemy.sql.schema import ForeignKey
-from typing import Optional, List, Dict
+from sqlalchemy.sql import func
+from typing import Optional, Dict, List
 from config import DATABASE_URL
+from datetime import datetime
 
 engine = create_async_engine(url=DATABASE_URL)
 metadata = MetaData()
@@ -34,56 +35,72 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True)
-    user_data: Mapped[List["UserData"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
-    )
-    nmt: Mapped[Optional[Dict]] = mapped_column(JSON, nullable=True)
+    
+    # Зберігаємо бали користувача: {"Ukr": 170, "Math": 180, ...}
+    nmt_scores: Mapped[Optional[Dict]] = mapped_column(JSON, nullable=True)
+    
+    # Налаштування: {"quotas": ["kv1"], "region_coef": true, "creative_score_prediction": 150}
+    settings: Mapped[Optional[Dict]] = mapped_column(JSON, default={})
+    
+    # Статистика використання
     activates: Mapped[int] = mapped_column(Integer, default=0)
     right_activates: Mapped[int] = mapped_column(Integer, default=0)
 
+    saved_lists: Mapped[List["SavedList"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
-class UserData(Base):
-    __tablename__ = "user_data"
+
+class SavedList(Base):
+    """
+    Збережені користувачем списки (спеціальності).
+    Зберігають snapshot даних на момент аналізу.
+    """
+    __tablename__ = "saved_lists"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_tg_id: Mapped[int] = mapped_column(
         ForeignKey("users.tg_id", ondelete="CASCADE"), nullable=False
     )
-    name: Mapped[str] = mapped_column(String)
-    status: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    priority: Mapped[int] = mapped_column(Integer)
-    score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    detail: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    coefficient: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    quota: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    link: Mapped[str] = mapped_column(String)
-    competitor: Mapped[bool] = mapped_column(Boolean)
-
-    user: Mapped["User"] = relationship(back_populates="user_data")
-
-    __table_args__ = (
-        Index(
-            "user_data_index",
-            "user_tg_id",
-            "status",
-            "coefficient",
-            "quota",
-            "score",
-            "competitor",
-        ),
+    name: Mapped[str] = mapped_column(String) # Назва спеціальності/ВНЗ
+    url: Mapped[str] = mapped_column(String)
+    data: Mapped[Dict] = mapped_column(JSON) # Повний JSON оброблених даних (competitors, chances etc.)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
     )
 
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "tg_id": self.user_tg_id,
-            "name": self.name,
-            "status": self.status,
-            "coefficient": self.coefficient,
-            "quota": self.quota,
-            "score": self.score,
-            "competitor": self.competitor,
-        }
+    user: Mapped["User"] = relationship(back_populates="saved_lists")
+
+
+class CompetitorCache(Base):
+    """
+    Кеш для зберігання інформації про конкурентів.
+    """
+    __tablename__ = "competitor_cache"
+
+    name: Mapped[str] = mapped_column(String, primary_key=True)
+    data: Mapped[Dict] = mapped_column(JSON)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        server_default=func.now(), 
+        onupdate=func.now()
+    )
+
+
+class URLCache(Base):
+    """
+    Глобальний кеш для розпарсених сторінок університетів.
+    Дозволяє не парсити одну й ту ж сторінку 100 разів для різних юзерів.
+    """
+    __tablename__ = "url_cache"
+
+    url: Mapped[str] = mapped_column(String, primary_key=True)
+    data: Mapped[Dict] = mapped_column(JSON) # Результат parser()
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        server_default=func.now(), 
+        onupdate=func.now()
+    )
 
 
 async def async_main():
