@@ -168,11 +168,11 @@ async def builder_applicant_all(tg_id: int, page: int) -> InlineKeyboardMarkup:
         # Якщо кеш пустий, повертаємо порожню клавіатуру з кнопкою назад
         return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Дані втрачено. Почніть спочатку", callback_data="applicant_back_to_stat")]])
 
-    competitors = result.get("requests", {}).get("competitors", {})
-    non_competitors = result.get("requests", {}).get("non-competitors", {})
+    competitors_dict = result.get("requests", {}).get("competitors", {})
+    non_competitors_dict = result.get("requests", {}).get("non-competitors", {})
     
     # Об'єднуємо всіх, зберігаючи ID як ключі
-    all_list = [(app_id, app) for app_id, app in competitors.items()] + [(app_id, app) for app_id, app in non_competitors.items()]
+    all_list = [(app_id, app) for app_id, app in competitors_dict.items()] + [(app_id, app) for app_id, app in non_competitors_dict.items()]
     # Сортуємо за балом (спадання)
     all_list.sort(key=lambda x: x[1].get("score", 0), reverse=True)
 
@@ -189,7 +189,7 @@ async def builder_applicant_all(tg_id: int, page: int) -> InlineKeyboardMarkup:
         applicant_name = " ".join(app.get("name", "").split(" ")[:2])
         score = app.get("score", 0)
         # Маркуємо, якщо це конкурент (перевіримо обидва формати ключа)
-        marker = "🔴" if (applicant_id in competitors or str(applicant_id) in competitors) else "🟢"
+        marker = "🔴" if (applicant_id in competitors_dict or str(applicant_id) in competitors_dict) else "🟢"
         
         applicants.button(
             text=f"{marker} {applicant_name} | {score}",

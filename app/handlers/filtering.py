@@ -24,7 +24,7 @@ from app.services.decoder import decoder
 from app.services.filter import filter_data
 from app.services.results_cache import save_result, get_result
 from app.services.visualization import generate_rating_histogram
-from app.database.requests import get_user_nmt, update_user_activates, save_specialty_list, get_cached_url, cache_url
+from app.database.requests import get_user_nmt, update_user_activates, update_user_right_activates, save_specialty_list, get_cached_url, cache_url
 from app.services.logger import (
     log_user_action,
     log_admin_action,
@@ -162,6 +162,7 @@ async def process_link(message: Message, state: FSMContext, creative_score: floa
         
         save_result(user_id, final_data)
         await update_user_activates(user_id)
+        await update_user_right_activates(user_id)
 
         # Output
         analysis = final_data.get("analysis", {})
