@@ -51,16 +51,16 @@ async def error_handler(update, exception):
                     "❌ Сталася непередбачена помилка. Адміністратори були сповіщені.\n"
                     "Спробуйте ще раз або скористайтесь командою /start",
                 )
-            except:
+            except Exception:
                 pass
         elif hasattr(update, 'callback_query') and update.callback_query:
             user_id = update.callback_query.from_user.id
             try:
                 await update.callback_query.answer("❌ Помилка обробки. Спробуйте ще раз.", show_alert=True)
-            except:
+            except Exception:
                 pass
         
-        log_error(exception, f"Global handler error for user")
+        log_error(exception, "Global handler error for user")
     except Exception as e:
         log_error(e, "Error in global error handler")
 

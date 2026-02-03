@@ -21,7 +21,7 @@ from aiogram.fsm.context import FSMContext
 
 import app.database.requests as rq
 import app.keyboards as kb
-from config import ADMIN_ID, bot
+from config import ADMIN_ID
 from app.services.logger import log_user_action, log_admin_action, log_error
 from app.services.results_cache import save_result
 from app.services.visualization import generate_rating_histogram
@@ -165,7 +165,7 @@ async def return_back(message: Message, state: FSMContext):
         else:
             await message.answer("Головне меню", reply_markup=kb.user_main)
     except Exception as e:
-        log_error(e, f"Error in return_back")
+        log_error(e, "Error in return_back")
 
 
 @router.message(F.text == "💸 Донат 💸")

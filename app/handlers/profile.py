@@ -27,7 +27,7 @@ from app.services.results_cache import save_result
 from app.services.visualization import generate_rating_histogram
 from app.states import ProfileStates as pst
 from app.states import States as st
-from app.services.logger import log_user_action, log_error
+from app.services.logger import log_error
 from config import bot
 
 router = Router()
@@ -186,7 +186,8 @@ async def cancel_subj_edit(callback: CallbackQuery):
     try:
         await callback.message.delete()
         await callback.answer()
-    except: pass
+    except Exception: 
+        pass
 
 
 @router.message(pst.enter_score)

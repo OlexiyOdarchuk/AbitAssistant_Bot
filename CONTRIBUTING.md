@@ -256,7 +256,7 @@ venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 
 # Запустіть PostgreSQL окремо або через Docker
-docker-compose up -d postgres
+docker-compose up -d
 
 # Запустіть бота
 python bot.py

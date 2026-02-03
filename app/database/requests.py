@@ -18,7 +18,7 @@ from app.database.models import User, CompetitorCache, SavedList, URLCache
 from sqlalchemy import select, func, desc, delete
 from sqlalchemy.dialects.postgresql import insert
 from typing import List, Optional
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 
 async def set_user(tg_id: int) -> None:

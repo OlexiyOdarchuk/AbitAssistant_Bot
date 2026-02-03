@@ -84,7 +84,7 @@
 4. **Запустити проєкт:**
 
    ```bash
-   docker-compose up --build
+   docker-compose up --build -d
    ```
 
 ---
@@ -98,7 +98,9 @@
 ## 📦 Залежності
 
 - **Python** + **Aiogram** – логіка бота
-- **aiohttp** – парсинг даних з вебсайтів
+- **aiohttp** + **BeautifulSoup4** – парсинг даних з вебсайтів
+- **Pandas** + **NumPy** – обробка та аналіз даних
+- **Matplotlib** – візуалізація статистики
 - **SQLAlchemy** – ORM для роботи з базою даних
 - **PostgreSQL** – основна СУБД
 - **Docker** – контейнеризація
@@ -150,12 +152,16 @@ Gmail: [Написати лист](mailto:shawyhaf@gmail.com)
 │   │   ├── [admin.py](./app/handlers/admin.py) — адмін-команди  
 │   │   ├── [common.py](./app/handlers/common.py) — загальні команди  
 │   │   ├── [filtering.py](./app/handlers/filtering.py) — фільтрація даних  
+│   │   ├── [profile.py](./app/handlers/profile.py) — профіль користувача  
 │   │   ├── [support.py](./app/handlers/support.py) — зворотній зв'язок  
 │   │   ├── [viewing.py](./app/handlers/viewing.py) — перегляд абітурієнтів  
 │   ├── services/ — основна логіка бота (парсинг, аналіз, генерація)  
 │   │   ├── [decoder.py](./app/services/decoder.py) - обробка данних, що отримані з API через [parser.py](./app/services/parser.py)  
 │   │   ├── [parser.py](./app/services/parser.py) - парсинг данних з API  
-│   │   ├── [parse_in_db_OLD.py](./app/services/parse_in_db_OLD.py) — старий парсинг, аналіз і додавання даних до БД  
+│   │   ├── [parse_abit_poisk.py](./app/services/parse_abit_poisk.py) — парсинг додаткових даних  
+│   │   ├── [filter.py](./app/services/filter.py) — логіка фільтрації  
+│   │   ├── [results_cache.py](./app/services/results_cache.py) — кешування результатів  
+│   │   ├── [visualization.py](./app/services/visualization.py) — генерація графіків  
 │   │   ├── [generate_link.py](./app/services/generate_link.py) — генерування посилань  
 │   │   ├── [mailing.py](./app/services/mailing.py) — розсилки  
 │   │   ├── [support.py](./app/services/support.py) — обробка відгуків  

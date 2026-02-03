@@ -15,21 +15,20 @@
 
 import asyncio
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from urllib.parse import urlparse
 
 from app.services.parser import parser
 from app.services.decoder import decoder
 from app.services.filter import filter_data
-from app.services.results_cache import save_result, get_result
+from app.services.results_cache import save_result
 from app.services.visualization import generate_rating_histogram
-from app.database.requests import get_user_nmt, update_user_activates, update_user_right_activates, save_specialty_list, get_cached_url, cache_url
+from app.database.requests import get_user_nmt, update_user_activates, update_user_right_activates, get_cached_url, cache_url
 from app.services.logger import (
     log_user_action,
     log_admin_action,
     log_error,
-    log_system_event,
 )
 import app.keyboards as kb
 from app.states import States as st
@@ -86,7 +85,6 @@ async def get_link(message: Message, state: FSMContext):
 async def process_link(message: Message, state: FSMContext, creative_score: float = 0):
     try:
         user_id = message.from_user.id
-        username = message.from_user.username
         url = message.text.strip()
         
         # Якщо це виклик з creative_score, url треба брати зі state
@@ -103,7 +101,6 @@ async def process_link(message: Message, state: FSMContext, creative_score: floa
             
             await state.update_data(current_url=url)
             
-            # Check Global Cache first
             raw_data = await get_cached_url(url)
             
             if raw_data:
@@ -124,7 +121,6 @@ async def process_link(message: Message, state: FSMContext, creative_score: floa
                                 await message.answer("❌ Не вдалося отримати дані з сайту або список порожній.")
                                 return
                         
-                        # Save to Global Cache
                         await cache_url(url, raw_data)
                         
                         decoded_data = decoder(raw_data, user_id)
@@ -156,15 +152,13 @@ async def process_link(message: Message, state: FSMContext, creative_score: floa
                 "❌ Помилка при фільтрації конкурентів. Спробуйте ще раз."
             )
             return
-            
-        # Store URL in result for later reference
+        
         final_data["url"] = url
         
         save_result(user_id, final_data)
         await update_user_activates(user_id)
         await update_user_right_activates(user_id)
 
-        # Output
         analysis = final_data.get("analysis", {})
         chance = analysis.get("chance", "Unknown")
         advice = analysis.get("advice", "")
@@ -181,11 +175,9 @@ async def process_link(message: Message, state: FSMContext, creative_score: floa
             "Zero": "⚫ Нульовий"
         }.get(chance, chance)
         
-        # Async Graph Generation
         loop = asyncio.get_running_loop()
         title = f"Рейтинг: {final_data.get('university_name', '')[:20]}"
         
-        # Run matplotlib in executor to avoid blocking
         try:
             photo = await loop.run_in_executor(
                 None, 

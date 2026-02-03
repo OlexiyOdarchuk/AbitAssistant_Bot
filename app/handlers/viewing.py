@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import re
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
@@ -22,7 +21,6 @@ from aiogram.exceptions import TelegramBadRequest
 
 import app.keyboards as kb
 import app.database.requests as rq
-from app.services.stats import all_applicant_len, competitors_applicant_len
 from app.services.results_cache import get_result, save_result
 from app.services.filter import recalculate_analysis, get_cached_competitor
 from app.services.logger import log_user_action, log_admin_action, log_error
@@ -147,7 +145,7 @@ async def change_page_all(callback: CallbackQuery, state: FSMContext):
     except TelegramBadRequest:
         await callback.answer()
     except Exception as e:
-        log_error(e, f"Error in change_page_all")
+        log_error(e, "Error in change_page_all")
 
 
 @router.callback_query(st.view_competitors, F.data.startswith("competitors_page_"))
@@ -161,7 +159,7 @@ async def change_page_competitors(callback: CallbackQuery, state: FSMContext):
     except TelegramBadRequest:
         await callback.answer()
     except Exception as e:
-        log_error(e, f"Error in change_page_competitors")
+        log_error(e, "Error in change_page_competitors")
 
 
 @router.message(st.view_all)
@@ -189,12 +187,13 @@ async def change_page_at_message_all(message: Message, state: FSMContext):
                     reply_markup=keyboard
                 )
                 return
-            except Exception: pass
+            except Exception: 
+                pass
 
         sent = await message.answer(change_page_text, reply_markup=keyboard)
         await state.update_data(last_bot_message_id=sent.message_id)
     except Exception as e:
-        log_error(e, f"Error in change_page_at_message_all")
+        log_error(e, "Error in change_page_at_message_all")
 
 
 @router.message(st.view_competitors)
@@ -222,15 +221,15 @@ async def change_page_at_message_competitors(message: Message, state: FSMContext
                     reply_markup=keyboard
                 )
                 return
-            except Exception: pass
+            except Exception:
+                pass
 
         sent = await message.answer(change_page_text, reply_markup=keyboard)
         await state.update_data(last_bot_message_id=sent.message_id)
     except Exception as e:
-        log_error(e, f"Error in change_page_at_message_competitors")
+        log_error(e, "Error in change_page_at_message_competitors")
 
 
-# --- Viewing Details & Toggle ---
 
 async def render_applicant_details(callback: CallbackQuery, applicant_id: int):
     """Helper to render applicant details to avoid code duplication."""
@@ -285,7 +284,7 @@ async def render_applicant_details(callback: CallbackQuery, applicant_id: int):
         else:
             await callback.answer("Абітурієнта не знайдено.", show_alert=True)
     except Exception as e:
-        log_error(e, f"Error rendering applicant details")
+        log_error(e, "Error rendering applicant details")
 
 
 @router.callback_query(
@@ -333,19 +332,19 @@ async def toggle_threat(callback: CallbackQuery):
             if str(applicant_id) in competitors or str(applicant_id) in non_competitors:
                 app_key = str(applicant_id)
             
-        # Toggle Logic
         if is_threat:
-            if app_key in competitors: del competitors[app_key]
+            if app_key in competitors: 
+                del competitors[app_key]
             target_app["filter_reason"] = "Manual override (Not Threat)"
             non_competitors[app_key] = target_app
             await callback.answer("✅ Позначено як НЕ конкурент")
         else:
-            if app_key in non_competitors: del non_competitors[app_key]
+            if app_key in non_competitors:
+                del non_competitors[app_key]
             target_app["filter_reason"] = "Manual override (Real Threat)"
             competitors[app_key] = target_app
             await callback.answer("✅ Позначено як КОНКУРЕНТ")
             
-        # Recalculate
         new_result = await recalculate_analysis(result, user_id)
         save_result(user_id, new_result)
         
@@ -382,7 +381,6 @@ async def show_abit_history(callback: CallbackQuery):
         name = target_app.get("name")
         await callback.answer("🔍 Завантажую історію...")
         
-        # Fetch data
         history = await get_cached_competitor(name)
         if not history:
              from app.services.parse_abit_poisk import fetch_applicant_data
@@ -398,7 +396,7 @@ async def show_abit_history(callback: CallbackQuery):
         text = f"📋 **Історія заяв: {name}**\n\n"
         try:
             history.sort(key=lambda x: int(x.get("priority", 99)) if str(x.get("priority")).isdigit() else 99)
-        except:
+        except Exception:
             pass
         
         for item in history[:10]:
@@ -443,7 +441,6 @@ async def save_current_list(callback: CallbackQuery):
             await callback.answer("Нічого зберігати", show_alert=True)
             return
             
-        program_info = result.get("program_info", {})
         name = f"{result.get('university_name', 'Unknown')} | {result.get('spec_code', '')} {result.get('program_name', '')}"
         name = name[:50] + "..." if len(name) > 50 else name
         url = result.get("url", "https://vstup.osvita.ua/") 

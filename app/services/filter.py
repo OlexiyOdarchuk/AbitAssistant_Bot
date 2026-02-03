@@ -14,7 +14,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
-import re
 from app.database.requests import (
     get_user_nmt,
     get_user_settings,
@@ -22,7 +21,7 @@ from app.database.requests import (
     cache_competitor,
 )
 from app.services.parse_abit_poisk import fetch_applicant_data
-from app.services.logger import log_parsing_action, log_error, log_system_event
+from app.services.logger import log_parsing_action, log_error
 
 REQUIRED_SUBJECTS = {"Українська мова", "Математика", "Історія України"}
 
@@ -149,6 +148,8 @@ async def recalculate_analysis(data: dict, tg_id: int) -> dict:
     
     volume_data = data.get("volume", {})
     
+    competitors = data.get("requests", {}).get("competitors", {}).values()
+
     # Спроба знайти загальний обсяг за різними ключами
     total_budget_volume = parse_volume_limit(volume_data, "Максимальний обсяг державного замовлення")
     if total_budget_volume == 0:
@@ -161,11 +162,9 @@ async def recalculate_analysis(data: dict, tg_id: int) -> dict:
     
     # Якщо не вдалося знайти обсяги, то аналіз неможливо виконати
     if total_budget_volume <= 0:
-        log_parsing_action(tg_id, f"WARNING: Could not determine budget volume. Analysis may be inaccurate.")
-        # Встановимо мінімальні значення для продовження
+        log_parsing_action(tg_id, "WARNING: Could not determine budget volume. Analysis may be inaccurate.")
         total_budget_volume = max(1, len(list(competitors)) + 1)
-    
-    competitors = data.get("requests", {}).get("competitors", {}).values()
+
     
     # Розподіляємо конкурентів (тільки тих, хто зараз в списку competitors)
     q1_list = []
@@ -262,6 +261,12 @@ async def filter_data(data: dict, tg_id: int, creative_contest_score: float = 0)
     
     tasks = []
     task_map = {}
+    
+    sem = asyncio.Semaphore(5)
+
+    async def protected_check(name, prio, tid):
+        async with sem:
+            return await check_competitor_threat(name, prio, tid)
 
     sorted_requests = sorted(requests.values(), key=lambda x: x["score"], reverse=True)
 
@@ -275,16 +280,12 @@ async def filter_data(data: dict, tg_id: int, creative_contest_score: float = 0)
             non_competitors[abit_id] = req
             continue
 
-        # Check if already enrolled elsewhere (деактивовано = enrolled at another program)
-        # These people are NOT competitors because they took a spot elsewhere, not here
         status = req.get("status", "").lower()
-        if "деактивовано" in status:
-            req["filter_reason"] = "Already enrolled elsewhere"
+        if "деактивовано" in status or "скасовано" in status or "відмовлено" in status:
+            req["filter_reason"] = "Cancelled/Enrolled elsewhere"
             non_competitors[abit_id] = req
             continue
 
-        # People with "до наказу" or "рекомендовано" ARE competitors because they occupy spots on THIS program
-        # Also check for variations with spaces and brackets
         if ("до наказу" in status or "рекомендовано" in status or 
             "до наказу" in status.replace(" ", "") or "доналказу" in status.replace(" ", "")):
             req["filter_reason"] = "Recommended/To order (occupies spot)"
@@ -301,7 +302,7 @@ async def filter_data(data: dict, tg_id: int, creative_contest_score: float = 0)
             competitors[abit_id] = req
             continue
             
-        task = asyncio.create_task(check_competitor_threat(name, priority, tg_id))
+        task = asyncio.create_task(protected_check(name, priority, tg_id))
         tasks.append(task)
         task_map[task] = (abit_id, req)
 
@@ -323,7 +324,6 @@ async def filter_data(data: dict, tg_id: int, creative_contest_score: float = 0)
     # Оновлення словника з даними
     final_competitors = {}
     for aid, req in competitors.items():
-        # People with "до наказу" or "рекомендовано" ALWAYS stay as competitors (they occupy spots)
         status = req.get("status", "").lower()
         if "до наказу" in status or "рекомендовано" in status:
             final_competitors[aid] = req
