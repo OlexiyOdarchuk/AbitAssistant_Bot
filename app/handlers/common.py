@@ -54,7 +54,6 @@ async def start(message: Message, state: FSMContext, command: CommandObject):
         user_id = message.from_user.id
         await rq.set_user(user_id)
         
-        # --- Deep Linking (Sharing) ---
         args = command.args
         if args and args.startswith("list_"):
             try:

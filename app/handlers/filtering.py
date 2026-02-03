@@ -67,9 +67,9 @@ async def start_filter(message: Message, state: FSMContext):
         await message.answer(
             "Надішліть посилання на сторінку освітньої програми з сайту vstup.osvita.ua.\n\n"
             "Наприклад:\n"
-            "https://vstup.osvita.ua/y2025/r27/41/1352329/\n\n"
-            "🔗 Переконайтесь, що посилання починається з 'https://vstup.osvita.ua/y2025/'",
-             reply_markup=kb.return_back
+            "https://vstup.osvita.ua/y2025/r27/41/1552449/\n\n"
+            "🔗 Переконайтесь, що посилання починається з 'https://vstup.osvita.ua/y2026/'",
+            reply_markup=kb.return_back,
         )
         await state.set_state(st.get_link)
         
@@ -143,7 +143,6 @@ async def process_link(message: Message, state: FSMContext, creative_score: floa
             await state.set_state(pst.enter_creative_score)
             return
 
-        # Filtering
         try:
             final_data = await filter_data(decoded_data, user_id, creative_contest_score=creative_score)
         except Exception as e:
