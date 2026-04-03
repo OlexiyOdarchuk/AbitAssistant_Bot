@@ -51,8 +51,8 @@ async def update_user_right_activates(tg_id: int) -> None:
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
         if not user:
-             user = User(tg_id=tg_id, right_activates=1)
-             session.add(user)
+            user = User(tg_id=tg_id, right_activates=1)
+            session.add(user)
         else:
             user.right_activates = (user.right_activates or 0) + 1
         await session.commit()
@@ -93,6 +93,7 @@ async def get_top_user() -> dict | None:
 
 # --- Робота з даними користувача (НМТ та Налаштування) ---
 
+
 async def get_user_nmt(tg_id: int) -> dict:
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
@@ -105,9 +106,9 @@ async def set_user_nmt(tg_id: int, nmt_scores: dict) -> None:
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
         if not user:
-             user = User(tg_id=tg_id)
-             session.add(user)
-        
+            user = User(tg_id=tg_id)
+            session.add(user)
+
         user.nmt_scores = nmt_scores
         await session.commit()
 
@@ -124,24 +125,20 @@ async def set_user_settings(tg_id: int, settings: dict) -> None:
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
         if not user:
-             user = User(tg_id=tg_id)
-             session.add(user)
-        
+            user = User(tg_id=tg_id)
+            session.add(user)
+
         user.settings = settings
         await session.commit()
 
 
 # --- Робота зі збереженими списками ---
 
+
 async def save_specialty_list(tg_id: int, name: str, url: str, data: dict) -> int:
     """Зберігає список і повертає його ID"""
     async with async_session() as session:
-        saved_list = SavedList(
-            user_tg_id=tg_id,
-            name=name,
-            url=url,
-            data=data
-        )
+        saved_list = SavedList(user_tg_id=tg_id, name=name, url=url, data=data)
         session.add(saved_list)
         await session.commit()
         return saved_list.id
@@ -170,22 +167,31 @@ async def delete_saved_list(list_id: int) -> None:
 
 # --- Робота з кешем конкурентів ---
 
-async def get_cached_competitor(name: str, cache_validity_seconds: int = 86400) -> Optional[List[dict]]:
+
+async def get_cached_competitor(
+    name: str, cache_validity_seconds: int = 86400
+) -> Optional[List[dict]]:
     """
     Отримує дані конкурента з кешу, якщо вони не застаріли.
     Default validity: 24 години (86400 с).
     """
     async with async_session() as session:
-        competitor = await session.scalar(select(CompetitorCache).where(CompetitorCache.name == name))
-        
+        competitor = await session.scalar(
+            select(CompetitorCache).where(CompetitorCache.name == name)
+        )
+
         if not competitor:
             return None
-            
+
         now = datetime.now()
         # Спрощений варіант: якщо updated_at + valid < now -> застаріло
-        if competitor.updated_at.replace(tzinfo=None) + timedelta(seconds=cache_validity_seconds) < now:
+        if (
+            competitor.updated_at.replace(tzinfo=None)
+            + timedelta(seconds=cache_validity_seconds)
+            < now
+        ):
             return None
-            
+
         return competitor.data
 
 
@@ -195,16 +201,19 @@ async def cache_competitor(name: str, data: List[dict]) -> None:
     Використовує UPSERT (on conflict do update).
     """
     async with async_session() as session:
-        stmt = insert(CompetitorCache).values(name=name, data=data, updated_at=datetime.now())
+        stmt = insert(CompetitorCache).values(
+            name=name, data=data, updated_at=datetime.now()
+        )
         stmt = stmt.on_conflict_do_update(
-            index_elements=['name'],
-            set_={'data': stmt.excluded.data, 'updated_at': datetime.now()}
+            index_elements=["name"],
+            set_={"data": stmt.excluded.data, "updated_at": datetime.now()},
         )
         await session.execute(stmt)
         await session.commit()
 
 
 # --- Глобальний кеш URL ---
+
 
 async def get_cached_url(url: str, validity_minutes: int = 10) -> Optional[dict]:
     """
@@ -213,15 +222,18 @@ async def get_cached_url(url: str, validity_minutes: int = 10) -> Optional[dict]
     """
     async with async_session() as session:
         cached = await session.scalar(select(URLCache).where(URLCache.url == url))
-        
+
         if not cached:
             return None
-            
+
         now = datetime.now()
         # Check expiration
-        if cached.updated_at.replace(tzinfo=None) + timedelta(minutes=validity_minutes) < now:
+        if (
+            cached.updated_at.replace(tzinfo=None) + timedelta(minutes=validity_minutes)
+            < now
+        ):
             return None
-            
+
         return cached.data
 
 
@@ -232,8 +244,8 @@ async def cache_url(url: str, data: dict) -> None:
     async with async_session() as session:
         stmt = insert(URLCache).values(url=url, data=data, updated_at=datetime.now())
         stmt = stmt.on_conflict_do_update(
-            index_elements=['url'],
-            set_={'data': stmt.excluded.data, 'updated_at': datetime.now()}
+            index_elements=["url"],
+            set_={"data": stmt.excluded.data, "updated_at": datetime.now()},
         )
         await session.execute(stmt)
         await session.commit()

@@ -37,10 +37,10 @@ async def create_payload(url: str, last: int, tg_id: int) -> dict:
         data = url.strip("/").split("/")
         sid = data[-1]
         uid = data[-2]
-        y = data[-4][1:] # y2025 -> 2025
-        
+        y = data[-4][1:]  # y2025 -> 2025
+
         if not y.isdigit():
-             raise ValueError(f"Could not extract year from URL: {url}")
+            raise ValueError(f"Could not extract year from URL: {url}")
 
         payload = {
             "action": "requests",
@@ -232,9 +232,11 @@ async def parser(url: str, tg_id: int) -> dict:
                 log_parsing_step(tg_id, f"Fetching data from JSON URL: {data_url}")
                 async with session.get(data_url) as resp:
                     resp_data = await resp.json()
-                
+
                 requests_list = resp_data.get("requests", [])
-                log_parsing_step(tg_id, f"Received chunk with {len(requests_list)} requests")
+                log_parsing_step(
+                    tg_id, f"Received chunk with {len(requests_list)} requests"
+                )
 
                 if not requests_list:
                     log_parsing_step(tg_id, "Empty requests list in chunk, stopping")

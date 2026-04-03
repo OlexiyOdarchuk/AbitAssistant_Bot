@@ -41,11 +41,13 @@ async def cancel_handler(message: Message, state: FSMContext):
         return
 
     await state.clear()
-    
+
     user_id = message.from_user.id
     markup = kb.admin_main if user_id in ADMIN_ID else kb.user_main
-    
-    await message.answer("🚫 Дія скасована. Повернення до головного меню.", reply_markup=markup)
+
+    await message.answer(
+        "🚫 Дія скасована. Повернення до головного меню.", reply_markup=markup
+    )
 
 
 @router.message(CommandStart())
@@ -53,40 +55,49 @@ async def start(message: Message, state: FSMContext, command: CommandObject):
     try:
         user_id = message.from_user.id
         await rq.set_user(user_id)
-        
+
         args = command.args
         if args and args.startswith("list_"):
             try:
                 list_id = int(args.replace("list_", ""))
                 saved_list = await rq.get_saved_list(list_id)
-                
+
                 if saved_list:
                     await rq.save_specialty_list(
-                        user_id, 
-                        f"Копія: {saved_list.name}", 
-                        saved_list.url, 
-                        saved_list.data
+                        user_id,
+                        f"Копія: {saved_list.name}",
+                        saved_list.url,
+                        saved_list.data,
                     )
-                    
+
                     # Конвертуємо ключи зі str назад в int (JSON конвертує int ключі в str)
                     data = saved_list.data
                     requests = data.get("requests", {})
                     if requests:
                         competitors = requests.get("competitors", {})
                         non_competitors = requests.get("non-competitors", {})
-                        
+
                         # Конвертуємо ключи зі str в int
-                        data["requests"]["competitors"] = {int(k) if isinstance(k, str) and k.isdigit() else k: v for k, v in competitors.items()}
-                        data["requests"]["non-competitors"] = {int(k) if isinstance(k, str) and k.isdigit() else k: v for k, v in non_competitors.items()}
-                    
+                        data["requests"]["competitors"] = {
+                            int(k) if isinstance(k, str) and k.isdigit() else k: v
+                            for k, v in competitors.items()
+                        }
+                        data["requests"]["non-competitors"] = {
+                            int(k) if isinstance(k, str) and k.isdigit() else k: v
+                            for k, v in non_competitors.items()
+                        }
+
                     save_result(user_id, data)
-                    
-                    await message.answer(f"📥 Ви отримали спільний аналіз: **{saved_list.name}**\nВін збережений у вашому профілі.", parse_mode="Markdown")
-                    
+
+                    await message.answer(
+                        f"📥 Ви отримали спільний аналіз: **{saved_list.name}**\nВін збережений у вашому профілі.",
+                        parse_mode="Markdown",
+                    )
+
                     data = saved_list.data
                     analysis = data.get("analysis", {})
                     user_rating = data.get("user_rating_score", 0)
-                    
+
                     try:
                         loop = asyncio.get_running_loop()
                         photo = await loop.run_in_executor(
@@ -94,12 +105,12 @@ async def start(message: Message, state: FSMContext, command: CommandObject):
                             generate_rating_histogram,
                             data,
                             user_rating,
-                            title=f"Рейтинг: {saved_list.name[:20]}"
+                            title=f"Рейтинг: {saved_list.name[:20]}",
                         )
                     except Exception as e:
                         log_error(e, "Error generating histogram in start")
                         photo = None
-                    
+
                     caption = (
                         f"📊 **Результати аналізу:**\n\n"
                         f"🎯 **Рейтинговий бал:** {user_rating:.3f}\n"
@@ -107,16 +118,27 @@ async def start(message: Message, state: FSMContext, command: CommandObject):
                         f"🎲 **Шанс:** {analysis.get('chance')}\n\n"
                         f"Ви можете редагувати цей аналіз, переглядаючи список конкурентів."
                     )
-                    
+
                     if photo:
-                        await message.answer_photo(photo, caption=caption, parse_mode="Markdown", reply_markup=kb.applicant_stat)
+                        await message.answer_photo(
+                            photo,
+                            caption=caption,
+                            parse_mode="Markdown",
+                            reply_markup=kb.applicant_stat,
+                        )
                     else:
-                        await message.answer(caption, parse_mode="Markdown", reply_markup=kb.applicant_stat)
-                        
+                        await message.answer(
+                            caption,
+                            parse_mode="Markdown",
+                            reply_markup=kb.applicant_stat,
+                        )
+
                     await state.set_state(st.choice_list)
                     return
                 else:
-                    await message.answer("⚠️ Посилання застаріло або список було видалено.")
+                    await message.answer(
+                        "⚠️ Посилання застаріло або список було видалено."
+                    )
             except ValueError as e:
                 log_error(e, "Invalid list_id in deep link")
             except Exception as e:
@@ -134,9 +156,9 @@ async def start(message: Message, state: FSMContext, command: CommandObject):
             "Я допоможу тобі оцінити реальні шанси на вступ, відсіявши тих, хто проходить на вищі пріоритети.\n"
             "Більше ніяких ручних підрахунків та Excel-таблиць! 🚀",
             parse_mode="Markdown",
-            reply_markup=kb.user_main
+            reply_markup=kb.user_main,
         )
-        
+
         nmt = await rq.get_user_nmt(user_id)
         if not nmt:
             await asyncio.sleep(1)
@@ -144,9 +166,11 @@ async def start(message: Message, state: FSMContext, command: CommandObject):
                 "📝 **Давай заповнимо твій профіль!**\n\n"
                 "Щоб я міг рахувати твій рейтинговий бал, мені потрібні твої результати НМТ.\n"
                 "Це займе хвилину 👇",
-                parse_mode="Markdown"
+                parse_mode="Markdown",
             )
-            await message.answer("Обери перший предмет:", reply_markup=kb.get_subjects_kb({}))
+            await message.answer(
+                "Обери перший предмет:", reply_markup=kb.get_subjects_kb({})
+            )
             await state.set_state(pst.choose_subject)
 
     except Exception as e:
@@ -176,7 +200,7 @@ async def donate(message: Message):
         "💳 **Банка:** [Monobank](https://send.monobank.ua/jar/23E3WYNesG)",
         parse_mode="Markdown",
         disable_web_page_preview=True,
-        reply_markup=kb.return_back
+        reply_markup=kb.return_back,
     )
 
 
@@ -187,7 +211,7 @@ async def about_us(message: Message):
         "Я — студент коледжу Львівської Політехніки, і я створив цей інструмент, бо сам пройшов через пекло вступу.\n\n"
         "**Що робить цей бот?**\n"
         "1. **Парсить** списки з vstup.osvita.ua.\n"
-        "2. **Аналізує** конкурентів: перевіряє, чи проходять вони на вищі пріоритети (алгоритм \"The Technique\").\n"
+        '2. **Аналізує** конкурентів: перевіряє, чи проходять вони на вищі пріоритети (алгоритм "The Technique").\n'
         "3. **Рахує** твій реальний шанс та місце в черзі.\n"
         "4. **Візуалізує** дані графіками.\n\n"
         "**Технології:** Python, Aiogram, SQLAlchemy, Matplotlib.\n"
@@ -195,4 +219,9 @@ async def about_us(message: Message):
         "👨‍💻 **Автор:** [Олексій Одарчук](https://github.com/OlexiyOdarchuk)\n"
         "🛠 **Код:** [GitHub](https://github.com/OlexiyOdarchuk/AbitAssistant_bot)"
     )
-    await message.answer(text, parse_mode="Markdown", disable_web_page_preview=True, reply_markup=kb.user_main)
+    await message.answer(
+        text,
+        parse_mode="Markdown",
+        disable_web_page_preview=True,
+        reply_markup=kb.user_main,
+    )

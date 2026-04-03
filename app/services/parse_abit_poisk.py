@@ -17,16 +17,20 @@ async def fetch_applicant_data(name: str, tg_id: int = 0) -> list[dict]:
     try:
         log_parsing_step(tg_id, f"Fetching abit-poisk data for {name}")
         connector = aiohttp.TCPConnector(ssl=False)  # вимикаємо перевірку SSL
-        async with aiohttp.ClientSession(connector=connector, timeout=aiohttp.ClientTimeout(total=10)) as session:
+        async with aiohttp.ClientSession(
+            connector=connector, timeout=aiohttp.ClientTimeout(total=10)
+        ) as session:
             async with session.post(
                 ABIT_POISK_API_URL,
                 data={"search": name},
-                timeout=aiohttp.ClientTimeout(total=10)
+                timeout=aiohttp.ClientTimeout(total=10),
             ) as resp:
                 if resp.status != 200:
-                    log_error(f"abit-poisk returned {resp.status}", f"[User {tg_id}] {name}")
+                    log_error(
+                        f"abit-poisk returned {resp.status}", f"[User {tg_id}] {name}"
+                    )
                     return []
-                    
+
                 json_data = await resp.json()
 
         html = json_data.get("html", "")
@@ -62,7 +66,9 @@ async def fetch_applicant_data(name: str, tg_id: int = 0) -> list[dict]:
         log_parsing_step(tg_id, f"Found {len(result)} applications for {name}")
         return result
     except aiohttp.ClientConnectorError as e:
-        log_error(e, f"[User {tg_id}] Network error contacting abit-poisk: {str(e)[:100]}")
+        log_error(
+            e, f"[User {tg_id}] Network error contacting abit-poisk: {str(e)[:100]}"
+        )
         return []
     except aiohttp.ClientSSLError as e:
         log_error(e, f"[User {tg_id}] SSL error with abit-poisk: {str(e)[:100]}")
@@ -73,4 +79,3 @@ async def fetch_applicant_data(name: str, tg_id: int = 0) -> list[dict]:
     except Exception as e:
         log_error(e, f"[User {tg_id}] Unexpected error fetching abit data for {name}")
         return []
-

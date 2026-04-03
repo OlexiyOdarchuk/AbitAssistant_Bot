@@ -4,11 +4,14 @@
 
 _results = {}
 
+
 def save_result(tg_id: int, data: dict):
     _results[tg_id] = data
 
+
 def get_result(tg_id: int) -> dict:
     return _results.get(tg_id)
+
 
 def clear_result(tg_id: int):
     if tg_id in _results:

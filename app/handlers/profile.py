@@ -43,7 +43,7 @@ async def render_profile(message_or_callback, user_id: int, is_edit: bool = Fals
     try:
         nmt_scores = await rq.get_user_nmt(user_id)
         settings = await rq.get_user_settings(user_id)
-        
+
         formatted_nmt = ""
         if nmt_scores:
             for subject, score in nmt_scores.items():
@@ -62,21 +62,31 @@ async def render_profile(message_or_callback, user_id: int, is_edit: bool = Fals
             f"🌍 **Регіональний коефіцієнт:** {region_coef}\n\n"
             f"Оберіть дію нижче 👇"
         )
-        
+
         if is_edit:
             try:
                 if isinstance(message_or_callback, CallbackQuery):
-                     await message_or_callback.message.edit_text(text, parse_mode="Markdown", reply_markup=kb.profile_main)
+                    await message_or_callback.message.edit_text(
+                        text, parse_mode="Markdown", reply_markup=kb.profile_main
+                    )
                 else:
-                     await message_or_callback.edit_text(text, parse_mode="Markdown", reply_markup=kb.profile_main)
+                    await message_or_callback.edit_text(
+                        text, parse_mode="Markdown", reply_markup=kb.profile_main
+                    )
             except TelegramBadRequest as e:
                 if "message is not modified" not in str(e):
-                    await message_or_callback.answer(text, parse_mode="Markdown", reply_markup=kb.profile_main)
+                    await message_or_callback.answer(
+                        text, parse_mode="Markdown", reply_markup=kb.profile_main
+                    )
         else:
             if isinstance(message_or_callback, CallbackQuery):
-                await message_or_callback.message.answer(text, parse_mode="Markdown", reply_markup=kb.profile_main)
+                await message_or_callback.message.answer(
+                    text, parse_mode="Markdown", reply_markup=kb.profile_main
+                )
             else:
-                await message_or_callback.answer(text, parse_mode="Markdown", reply_markup=kb.profile_main)
+                await message_or_callback.answer(
+                    text, parse_mode="Markdown", reply_markup=kb.profile_main
+                )
 
     except Exception as e:
         log_error(e, f"Error rendering profile for user {user_id}")
@@ -89,11 +99,14 @@ async def open_profile(message: Message):
 
 # --- Редагування НМТ ---
 
+
 @router.callback_query(F.data == "edit_nmt")
 async def start_edit_nmt(callback: CallbackQuery, state: FSMContext):
     try:
         user_nmt = await rq.get_user_nmt(callback.from_user.id)
-        await callback.message.answer("Оберіть предмет:", reply_markup=kb.get_subjects_kb(user_nmt))
+        await callback.message.answer(
+            "Оберіть предмет:", reply_markup=kb.get_subjects_kb(user_nmt)
+        )
         await state.set_state(pst.choose_subject)
         await callback.answer()
     except Exception as e:
@@ -107,20 +120,24 @@ async def choose_subject(message: Message, state: FSMContext):
             await state.clear()
             await message.answer("Головне меню", reply_markup=kb.user_main)
             return
-        
+
         user_nmt = await rq.get_user_nmt(message.from_user.id)
 
         if message.text == "✅ Завершити введення":
             required = {"Українська мова", "Математика", "Історія України"}
             filled = set(user_nmt.keys())
-            
+
             missing = required - filled
             if missing:
-                await message.answer(f"❌ Ви не ввели бали з обов'язкових предметів: {', '.join(missing)}")
+                await message.answer(
+                    f"❌ Ви не ввели бали з обов'язкових предметів: {', '.join(missing)}"
+                )
                 return
-                
+
             if len(filled) != 4:
-                await message.answer(f"❌ Повинно бути рівно 4 предмети (3 обов'язкових + 1 на вибір). Зараз введено: {len(filled)}")
+                await message.answer(
+                    f"❌ Повинно бути рівно 4 предмети (3 обов'язкових + 1 на вибір). Зараз введено: {len(filled)}"
+                )
                 return
 
             await state.clear()
@@ -129,23 +146,34 @@ async def choose_subject(message: Message, state: FSMContext):
 
         clean_subject = message.text.replace("✅ ", "")
         valid_subjects = [
-            "Українська мова", "Математика", "Історія України", "Англійська мова",
-            "Біологія", "Фізика", "Хімія", "Географія", "Українська література", "Інша іноземна"
+            "Українська мова",
+            "Математика",
+            "Історія України",
+            "Англійська мова",
+            "Біологія",
+            "Фізика",
+            "Хімія",
+            "Географія",
+            "Українська література",
+            "Інша іноземна",
         ]
-        
+
         if clean_subject not in valid_subjects:
             await message.answer("❌ Будь ласка, оберіть предмет з клавіатури.")
             return
 
         if "✅ " in message.text:
-             await message.answer(
-                 f"Предмет '{clean_subject}' вже додано. Що хочете зробити?",
-                 reply_markup=kb.edit_or_delete_subject_kb(clean_subject)
-             )
-             return
+            await message.answer(
+                f"Предмет '{clean_subject}' вже додано. Що хочете зробити?",
+                reply_markup=kb.edit_or_delete_subject_kb(clean_subject),
+            )
+            return
 
         await state.update_data(current_subject=clean_subject)
-        await message.answer(f"Введіть ваш бал з предмету '{clean_subject}' (100-200):", reply_markup=kb.remove_keyboard)
+        await message.answer(
+            f"Введіть ваш бал з предмету '{clean_subject}' (100-200):",
+            reply_markup=kb.remove_keyboard,
+        )
         await state.set_state(pst.enter_score)
     except Exception as e:
         log_error(e, "Error in choose_subject")
@@ -156,7 +184,9 @@ async def edit_existing_subject(callback: CallbackQuery, state: FSMContext):
     try:
         subject = callback.data.split("edit_subj_")[1]
         await state.update_data(current_subject=subject)
-        await callback.message.edit_text(f"Введіть новий бал з предмету '{subject}' (100-200):")
+        await callback.message.edit_text(
+            f"Введіть новий бал з предмету '{subject}' (100-200):"
+        )
         await state.set_state(pst.enter_score)
         await callback.answer()
     except Exception as e:
@@ -168,14 +198,17 @@ async def delete_existing_subject(callback: CallbackQuery):
     try:
         subject = callback.data.split("del_subj_")[1]
         user_id = callback.from_user.id
-        
+
         user_nmt = await rq.get_user_nmt(user_id)
         if subject in user_nmt:
             del user_nmt[subject]
             await rq.set_user_nmt(user_id, user_nmt)
-        
+
         await callback.message.delete()
-        await callback.message.answer(f"🗑 Предмет '{subject}' видалено.", reply_markup=kb.get_subjects_kb(user_nmt))
+        await callback.message.answer(
+            f"🗑 Предмет '{subject}' видалено.",
+            reply_markup=kb.get_subjects_kb(user_nmt),
+        )
         await callback.answer()
     except Exception as e:
         log_error(e, "Error in delete_existing_subject")
@@ -186,7 +219,7 @@ async def cancel_subj_edit(callback: CallbackQuery):
     try:
         await callback.message.delete()
         await callback.answer()
-    except Exception: 
+    except Exception:
         pass
 
 
@@ -195,19 +228,24 @@ async def enter_score(message: Message, state: FSMContext):
     try:
         score_text = message.text.replace(",", ".")
         score = float(score_text)
-        
+
         if not (100 <= score <= 200):
-            await message.answer("❌ Бал повинен бути в межах від 100 до 200. Спробуйте ще раз.")
+            await message.answer(
+                "❌ Бал повинен бути в межах від 100 до 200. Спробуйте ще раз."
+            )
             return
 
         data = await state.get_data()
         subject = data.get("current_subject")
-        
+
         current_nmt = await rq.get_user_nmt(message.from_user.id)
         current_nmt[subject] = score
         await rq.set_user_nmt(message.from_user.id, current_nmt)
-        
-        await message.answer(f"✅ Збережено: {subject} - {score}", reply_markup=kb.get_subjects_kb(current_nmt))
+
+        await message.answer(
+            f"✅ Збережено: {subject} - {score}",
+            reply_markup=kb.get_subjects_kb(current_nmt),
+        )
         await state.set_state(pst.choose_subject)
     except ValueError:
         await message.answer("❌ Помилка. Введіть число (наприклад, 175.5).")
@@ -217,10 +255,15 @@ async def enter_score(message: Message, state: FSMContext):
 
 # --- Налаштування (Квоти та РК) ---
 
+
 @router.callback_query(F.data == "edit_settings")
 async def edit_settings_menu(callback: CallbackQuery):
     try:
-        await callback.message.edit_text("⚙️ **Налаштування профілю**\nОберіть категорію для редагування:", parse_mode="Markdown", reply_markup=kb.settings_kb)
+        await callback.message.edit_text(
+            "⚙️ **Налаштування профілю**\nОберіть категорію для редагування:",
+            parse_mode="Markdown",
+            reply_markup=kb.settings_kb,
+        )
         await callback.answer()
     except Exception as e:
         log_error(e, "Error in edit_settings_menu")
@@ -243,11 +286,11 @@ async def settings_quotas(callback: CallbackQuery):
     try:
         settings = await rq.get_user_settings(callback.from_user.id)
         quotas = settings.get("quotas", [])
-        
+
         await callback.message.edit_text(
             "🎟 **Налаштування квот**\nНатисніть на кнопку, щоб увімкнути/вимкнути квоту.",
             parse_mode="Markdown",
-            reply_markup=kb.get_quotas_kb(quotas)
+            reply_markup=kb.get_quotas_kb(quotas),
         )
         await callback.answer()
     except Exception as e:
@@ -257,21 +300,23 @@ async def settings_quotas(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("toggle_quota_"))
 async def toggle_quota(callback: CallbackQuery):
     try:
-        quota = callback.data.split("_")[-1] 
+        quota = callback.data.split("_")[-1]
         user_id = callback.from_user.id
-        
+
         settings = await rq.get_user_settings(user_id)
         current_quotas = settings.get("quotas", [])
-        
+
         if quota in current_quotas:
             current_quotas.remove(quota)
         else:
             current_quotas.append(quota)
-            
+
         settings["quotas"] = current_quotas
         await rq.set_user_settings(user_id, settings)
-        
-        await callback.message.edit_reply_markup(reply_markup=kb.get_quotas_kb(current_quotas))
+
+        await callback.message.edit_reply_markup(
+            reply_markup=kb.get_quotas_kb(current_quotas)
+        )
         await callback.answer()
     except Exception as e:
         log_error(e, "Error in toggle_quota")
@@ -283,11 +328,11 @@ async def settings_region(callback: CallbackQuery):
     try:
         settings = await rq.get_user_settings(callback.from_user.id)
         is_active = settings.get("region_coef", False)
-        
+
         await callback.message.edit_text(
             "🌍 **Регіональний коефіцієнт**\nЧи застосовувати регіональний коефіцієнт (РК) при розрахунках?",
             parse_mode="Markdown",
-            reply_markup=kb.get_region_kb(is_active)
+            reply_markup=kb.get_region_kb(is_active),
         )
         await callback.answer()
     except Exception as e:
@@ -299,19 +344,22 @@ async def toggle_region(callback: CallbackQuery):
     try:
         user_id = callback.from_user.id
         settings = await rq.get_user_settings(user_id)
-        
+
         new_state = not settings.get("region_coef", False)
         settings["region_coef"] = new_state
-        
+
         await rq.set_user_settings(user_id, settings)
-        
-        await callback.message.edit_reply_markup(reply_markup=kb.get_region_kb(new_state))
+
+        await callback.message.edit_reply_markup(
+            reply_markup=kb.get_region_kb(new_state)
+        )
         await callback.answer(f"РК {'увімкнено' if new_state else 'вимкнено'}")
     except Exception as e:
         log_error(e, "Error in toggle_region")
 
 
 # --- Збережені списки ---
+
 
 @router.callback_query(F.data == "saved_lists")
 async def show_saved_lists(callback: CallbackQuery):
@@ -321,21 +369,29 @@ async def show_saved_lists(callback: CallbackQuery):
             await callback.answer("У вас немає збережених списків.", show_alert=True)
             await render_profile(callback, callback.from_user.id, is_edit=True)
             return
-        
+
         builder = InlineKeyboardBuilder()
         for item in lists:
             btn_text = f"📂 {item.name[:30]}"
             builder.button(text=btn_text, callback_data=f"manage_list_{item.id}")
-        
+
         builder.button(text="⬅️ Назад", callback_data="back_to_profile")
         builder.adjust(1)
-        
+
         try:
-            await callback.message.edit_text("📂 **Ваші збережені списки:**", parse_mode="Markdown", reply_markup=builder.as_markup())
+            await callback.message.edit_text(
+                "📂 **Ваші збережені списки:**",
+                parse_mode="Markdown",
+                reply_markup=builder.as_markup(),
+            )
         except TelegramBadRequest:
             await callback.message.delete()
-            await callback.message.answer("📂 **Ваші збережені списки:**", parse_mode="Markdown", reply_markup=builder.as_markup())
-        
+            await callback.message.answer(
+                "📂 **Ваші збережені списки:**",
+                parse_mode="Markdown",
+                reply_markup=builder.as_markup(),
+            )
+
         await callback.answer()
     except Exception as e:
         log_error(e, "Error in show_saved_lists")
@@ -346,18 +402,18 @@ async def manage_list(callback: CallbackQuery):
     try:
         list_id = int(callback.data.split("_")[-1])
         saved_list = await rq.get_saved_list(list_id)
-        
+
         if not saved_list:
             await callback.answer("Не знайдено")
             await show_saved_lists(callback)
             return
-            
+
         text = (
             f"📂 **Список: {saved_list.name}**\n"
             f"📅 Створено: {saved_list.created_at.strftime('%Y-%m-%d %H:%M')}\n\n"
             f"Оберіть дію 👇"
         )
-        
+
         builder = InlineKeyboardBuilder()
         builder.button(text="👁 Переглянути", callback_data=f"load_list_{list_id}")
         builder.button(text="🔗 Поділитися", callback_data=f"share_list_{list_id}")
@@ -365,8 +421,10 @@ async def manage_list(callback: CallbackQuery):
         builder.button(text="🗑 Видалити", callback_data=f"delete_list_{list_id}")
         builder.button(text="⬅️ Назад", callback_data="saved_lists")
         builder.adjust(1)
-        
-        await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=builder.as_markup())
+
+        await callback.message.edit_text(
+            text, parse_mode="Markdown", reply_markup=builder.as_markup()
+        )
         await callback.answer()
     except Exception as e:
         log_error(e, "Error in manage_list")
@@ -384,11 +442,17 @@ async def load_saved_list(callback: CallbackQuery, state: FSMContext):
             if requests:
                 competitors = requests.get("competitors", {})
                 non_competitors = requests.get("non-competitors", {})
-                
+
                 # Конвертуємо ключі зі str в int
-                data["requests"]["competitors"] = {int(k) if isinstance(k, str) and k.isdigit() else k: v for k, v in competitors.items()}
-                data["requests"]["non-competitors"] = {int(k) if isinstance(k, str) and k.isdigit() else k: v for k, v in non_competitors.items()}
-            
+                data["requests"]["competitors"] = {
+                    int(k) if isinstance(k, str) and k.isdigit() else k: v
+                    for k, v in competitors.items()
+                }
+                data["requests"]["non-competitors"] = {
+                    int(k) if isinstance(k, str) and k.isdigit() else k: v
+                    for k, v in non_competitors.items()
+                }
+
             save_result(callback.from_user.id, data)
             analysis = data.get("analysis", {})
             chance = analysis.get("chance", "Unknown")
@@ -403,20 +467,16 @@ async def load_saved_list(callback: CallbackQuery, state: FSMContext):
                 "High (Quota 2)": "🟢 Високий (Квота 2)",
                 "Medium": "🟡 Середній",
                 "Low": "🔴 Низький",
-                "Zero": "⚫ Нульовий"
+                "Zero": "⚫ Нульовий",
             }.get(chance, chance)
-            
+
             loop = asyncio.get_running_loop()
             title = f"Рейтинг: {saved_list.name[:20]}"
-            
+
             photo = await loop.run_in_executor(
-                None, 
-                generate_rating_histogram, 
-                data, 
-                user_rating, 
-                title
+                None, generate_rating_histogram, data, user_rating, title
             )
-            
+
             caption = (
                 f"📂 Завантажено: **{saved_list.name}**\n\n"
                 f"🎯 **Ваш рейтинговий бал:** {user_rating:.3f}\n"
@@ -424,14 +484,21 @@ async def load_saved_list(callback: CallbackQuery, state: FSMContext):
                 f"🎲 **Шанс на вступ:** {chance_emoji}\n\n"
                 f"💡 **Вердикт:** {advice}"
             )
-            
+
             await callback.message.delete()
-            
+
             if photo:
-                await callback.message.answer_photo(photo, caption=caption, parse_mode="Markdown", reply_markup=kb.applicant_stat)
+                await callback.message.answer_photo(
+                    photo,
+                    caption=caption,
+                    parse_mode="Markdown",
+                    reply_markup=kb.applicant_stat,
+                )
             else:
-                await callback.message.answer(caption, parse_mode="Markdown", reply_markup=kb.applicant_stat)
-                
+                await callback.message.answer(
+                    caption, parse_mode="Markdown", reply_markup=kb.applicant_stat
+                )
+
             await state.set_state(st.choice_list)
             await callback.answer()
     except Exception as e:
@@ -445,11 +512,11 @@ async def share_list(callback: CallbackQuery):
         list_id = int(callback.data.split("_")[-1])
         bot_info = await bot.get_me()
         share_link = f"https://t.me/{bot_info.username}?start=list_{list_id}"
-        
+
         await callback.message.answer(
             f"🔗 **Ваше посилання для шерингу:**\n\n`{share_link}`\n\n"
             f"Будь-хто, хто перейде за цим посиланням, отримає копію вашого аналізу у свій профіль.",
-            parse_mode="Markdown"
+            parse_mode="Markdown",
         )
         await callback.answer()
     except Exception as e:
@@ -472,18 +539,20 @@ async def export_list(callback: CallbackQuery):
     try:
         list_id = int(callback.data.split("_")[-1])
         saved_list = await rq.get_saved_list(list_id)
-        
+
         if not saved_list:
             await callback.answer("Помилка")
             return
-            
+
         json_data = json.dumps(saved_list.data, indent=2, ensure_ascii=False)
-        file_content = BufferedInputFile(json_data.encode('utf-8'), filename=f"analysis_{list_id}.json")
-        
+        file_content = BufferedInputFile(
+            json_data.encode("utf-8"), filename=f"analysis_{list_id}.json"
+        )
+
         await callback.message.answer_document(
-            file_content, 
+            file_content,
             caption=f"📤 Повний експорт даних для списку: **{saved_list.name}**",
-            parse_mode="Markdown"
+            parse_mode="Markdown",
         )
         await callback.answer()
     except Exception as e:

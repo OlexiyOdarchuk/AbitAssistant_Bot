@@ -43,7 +43,7 @@ dp = Dispatcher()
 async def error_handler(update, exception):
     """Global error handler for unexpected exceptions"""
     try:
-        if hasattr(update, 'message') and update.message:
+        if hasattr(update, "message") and update.message:
             user_id = update.message.from_user.id
             try:
                 await bot.send_message(
@@ -53,13 +53,15 @@ async def error_handler(update, exception):
                 )
             except Exception:
                 pass
-        elif hasattr(update, 'callback_query') and update.callback_query:
+        elif hasattr(update, "callback_query") and update.callback_query:
             user_id = update.callback_query.from_user.id
             try:
-                await update.callback_query.answer("❌ Помилка обробки. Спробуйте ще раз.", show_alert=True)
+                await update.callback_query.answer(
+                    "❌ Помилка обробки. Спробуйте ще раз.", show_alert=True
+                )
             except Exception:
                 pass
-        
+
         log_error(exception, "Global handler error for user")
     except Exception as e:
         log_error(e, "Error in global error handler")

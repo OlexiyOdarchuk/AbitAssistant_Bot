@@ -24,7 +24,13 @@ from app.services.decoder import decoder
 from app.services.filter import filter_data
 from app.services.results_cache import save_result
 from app.services.visualization import generate_rating_histogram
-from app.database.requests import get_user_nmt, update_user_activates, update_user_right_activates, get_cached_url, cache_url
+from app.database.requests import (
+    get_user_nmt,
+    update_user_activates,
+    update_user_right_activates,
+    get_cached_url,
+    cache_url,
+)
 from app.services.logger import (
     log_user_action,
     log_admin_action,
@@ -48,14 +54,14 @@ async def start_filter(message: Message, state: FSMContext):
             log_admin_action(user_id, "Started analysis and filtering")
         else:
             log_user_action(user_id, username, "Started analysis and filtering")
-            
+
         nmt_scores = await get_user_nmt(user_id)
         if not nmt_scores:
             await message.answer(
                 "⛔️ **У вас не заповнені бали НМТ!**\n\n"
                 "Без них я не можу порахувати ваш рейтинговий бал і визначити ваші шанси.\n"
                 "Будь ласка, перейдіть в Налаштування профілю і додайте свої предмети.",
-                parse_mode="Markdown"
+                parse_mode="Markdown",
             )
             return
 
@@ -63,7 +69,7 @@ async def start_filter(message: Message, state: FSMContext):
             "Перед початком роботи, будь ласка, перегляньте це відео для розуміння того, як працювати з отриманими даними: https://www.youtube.com/watch?v=m5YfI8_2ONo",
             reply_markup=kb.remove_keyboard,
         )
-        
+
         await message.answer(
             "Надішліть посилання на сторінку освітньої програми з сайту vstup.osvita.ua.\n\n"
             "Наприклад:\n"
@@ -72,7 +78,7 @@ async def start_filter(message: Message, state: FSMContext):
             reply_markup=kb.return_back,
         )
         await state.set_state(st.get_link)
-        
+
     except Exception as e:
         log_error(e, f"Error in start_filter for user {message.from_user.id}")
 
@@ -86,23 +92,23 @@ async def process_link(message: Message, state: FSMContext, creative_score: floa
     try:
         user_id = message.from_user.id
         url = message.text.strip()
-        
+
         # Якщо це виклик з creative_score, url треба брати зі state
         if creative_score > 0:
             data = await state.get_data()
             url = data.get("current_url")
-            decoded_data = data.get("decoded_data") # Вже розпарсені дані
+            decoded_data = data.get("decoded_data")  # Вже розпарсені дані
         else:
             # Первинний виклик
             parsed_url = urlparse(url)
             if parsed_url.hostname != "vstup.osvita.ua":
-                 await message.answer("Посилання повинно бути з домену vstup.osvita.ua")
-                 return
-            
+                await message.answer("Посилання повинно бути з домену vstup.osvita.ua")
+                return
+
             await state.update_data(current_url=url)
-            
+
             raw_data = await get_cached_url(url)
-            
+
             if raw_data:
                 await message.answer("⚡️ Дані знайдено в кеші! Аналіз буде миттєвим.")
                 decoded_data = decoder(raw_data, user_id)
@@ -112,48 +118,54 @@ async def process_link(message: Message, state: FSMContext, creative_score: floa
                     "Це може зайняти певний час, оскільки ми перевіряємо статус ваших конкурентів в реальному часі 🕵️‍♂️",
                     reply_markup=kb.remove_keyboard,
                 )
-                
+
                 try:
                     async with MULTITASK:
                         raw_data = await parser(url, user_id)
                         if not raw_data or not raw_data.get("requests"):
-                                await status_msg.delete()
-                                await message.answer("❌ Не вдалося отримати дані з сайту або список порожній.")
-                                return
-                        
+                            await status_msg.delete()
+                            await message.answer(
+                                "❌ Не вдалося отримати дані з сайту або список порожній."
+                            )
+                            return
+
                         await cache_url(url, raw_data)
-                        
+
                         decoded_data = decoder(raw_data, user_id)
                 except Exception as e:
                     log_error(e, f"[User {user_id}] Error during parsing or decoding")
                     await status_msg.delete()
                     await message.answer("❌ Помилка при обробці даних...")
                     return
-        
+
         # Перевірка на творчий конкурс
         subj_coeffs = decoded_data.get("subject_coefficients", {})
         if "Творчий конкурс" in subj_coeffs and creative_score == 0:
-            await state.update_data(decoded_data=decoded_data) # Зберігаємо, щоб не парсити знову
+            await state.update_data(
+                decoded_data=decoded_data
+            )  # Зберігаємо, щоб не парсити знову
             await message.answer(
                 "🎨 **Увага! Ця спеціальність вимагає Творчий Конкурс.**\n"
                 "Ваші бали НМТ тут мають меншу вагу (коефіцієнт творчого зазвичай вищий).\n\n"
                 "Введіть ваш **орієнтовний бал** за творчий конкурс (100-200), щоб я міг порахувати шанси:",
-                parse_mode="Markdown"
+                parse_mode="Markdown",
             )
             await state.set_state(pst.enter_creative_score)
             return
 
         try:
-            final_data = await filter_data(decoded_data, user_id, creative_contest_score=creative_score)
+            final_data = await filter_data(
+                decoded_data, user_id, creative_contest_score=creative_score
+            )
         except Exception as e:
             log_error(e, f"[User {user_id}] Error during filtering")
             await message.answer(
                 "❌ Помилка при фільтрації конкурентів. Спробуйте ще раз."
             )
             return
-        
+
         final_data["url"] = url
-        
+
         save_result(user_id, final_data)
         await update_user_activates(user_id)
         await update_user_right_activates(user_id)
@@ -171,19 +183,15 @@ async def process_link(message: Message, state: FSMContext, creative_score: floa
             "High (Quota 2)": "🟢 Високий (Квота 2)",
             "Medium": "🟡 Середній",
             "Low": "🔴 Низький",
-            "Zero": "⚫ Нульовий"
+            "Zero": "⚫ Нульовий",
         }.get(chance, chance)
-        
+
         loop = asyncio.get_running_loop()
         title = f"Рейтинг: {final_data.get('university_name', '')[:20]}"
-        
+
         try:
             photo = await loop.run_in_executor(
-                None, 
-                generate_rating_histogram, 
-                final_data, 
-                user_rating, 
-                title
+                None, generate_rating_histogram, final_data, user_rating, title
             )
         except Exception as e:
             log_error(e, f"[User {user_id}] Error generating histogram")
@@ -210,19 +218,21 @@ async def process_link(message: Message, state: FSMContext, creative_score: floa
                 parse_mode="Markdown",
                 reply_markup=kb.applicant_stat,
             )
-            
-        await state.set_state(st.choice_list) # Готові до перегляду списків
+
+        await state.set_state(st.choice_list)  # Готові до перегляду списків
 
     except Exception as e:
         log_error(e, f"Error processing link for user {message.from_user.id}")
-        await message.answer("Сталася неочікувана помилка. Будь ласка, спробуйте ще раз або напишіть адміністраторам.")
+        await message.answer(
+            "Сталася неочікувана помилка. Будь ласка, спробуйте ще раз або напишіть адміністраторам."
+        )
 
 
 @router.message(pst.enter_creative_score)
 async def enter_creative_score(message: Message, state: FSMContext):
     try:
         score = float(message.text.replace(",", "."))
-        
+
         if 100 <= score <= 200:
             await message.answer(f"✅ Прийнято бал: {score}. Продовжую аналіз...")
             await process_link(message, state, creative_score=score)
