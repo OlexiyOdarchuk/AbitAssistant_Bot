@@ -14,11 +14,17 @@ async def fetch_applicant_data(name: str, tg_id: int = 0) -> list[dict]:
     Returns:
         list[dict]: всі його заяви і інформація про них (порожній список якщо помилка)
     """
+    headers = {
+        "X-Requested-With": "XMLHttpRequest",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    }
     try:
         log_parsing_step(tg_id, f"Fetching abit-poisk data for {name}")
         connector = aiohttp.TCPConnector(ssl=False)  # вимикаємо перевірку SSL
         async with aiohttp.ClientSession(
-            connector=connector, timeout=aiohttp.ClientTimeout(total=10)
+            connector=connector,
+            timeout=aiohttp.ClientTimeout(total=10),
+            headers=headers,
         ) as session:
             async with session.post(
                 ABIT_POISK_API_URL,
@@ -27,7 +33,8 @@ async def fetch_applicant_data(name: str, tg_id: int = 0) -> list[dict]:
             ) as resp:
                 if resp.status != 200:
                     log_error(
-                        f"abit-poisk returned {resp.status}", f"[User {tg_id}] {name}"
+                        RuntimeError(f"abit-poisk returned {resp.status}"),
+                        f"[User {tg_id}] {name}",
                     )
                     return []
 
