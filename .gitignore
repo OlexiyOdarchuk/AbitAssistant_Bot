@@ -9,6 +9,8 @@ wheels/
 # Virtual environments
 .venv
 .env
+.envrc
+.direnv
 
 #Private files
 test*

@@ -21,6 +21,8 @@
   - [🧠 Функціонал](#-функціонал)
   - [🗺 Roadmap](#-roadmap)
   - [🛠 Інсталяція](#-інсталяція)
+    - [Docker](#docker)
+    - [Nix](#nix)
   - [🚀 Використання](#-використання)
   - [📦 Залежності](#-залежності)
   - [⚙️ Конфігурація](#️-конфігурація)
@@ -66,6 +68,8 @@
 > - Docker + Docker Compose
 > - Telegram Bot Token
 
+### Docker
+
 **Кроки:**
 
 1. **Встановити Docker:**
@@ -86,6 +90,42 @@
    ```bash
    docker-compose up --build -d
    ```
+
+### Nix
+
+Якщо у вас встановлений [Nix](https://nixos.org/download/) з увімкненими flakes:
+
+1. **Клонувати репозиторій:**
+
+   ```bash
+   git clone https://github.com/OlexiyOdarchuk/AbitAssistant_Bot.git
+   cd AbitAssistant_Bot
+   ```
+
+2. **Увійти в dev-середовище:**
+
+   ```bash
+   nix develop
+   ```
+
+   Це дасть вам Python, `uv`, `ruff`, `docker` та інші необхідні інструменти.
+
+3. **Встановити залежності:**
+
+   ```bash
+   make sync
+   ```
+
+4. **Налаштувати конфігурацію:**
+   - Створіть `.env` на основі `.env.example`
+
+5. **Запустити проєкт:**
+
+   ```bash
+   make docker-up
+   ```
+
+> Переглянути всі доступні команди: `make help`
 
 ---
 

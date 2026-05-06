@@ -14,32 +14,33 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
-from aiogram import Router, F
-from aiogram.types import Message
-from aiogram.fsm.context import FSMContext
 from urllib.parse import urlparse
 
-from app.services.parser import parser
-from app.services.decoder import decoder
-from app.services.filter import filter_data
-from app.services.results_cache import save_result
-from app.services.visualization import generate_rating_histogram
+from aiogram import F, Router
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message
+
+import app.keyboards as kb
 from app.database.requests import (
+    cache_url,
+    get_cached_url,
     get_user_nmt,
     update_user_activates,
     update_user_right_activates,
-    get_cached_url,
-    cache_url,
 )
+from app.services.decoder import decoder
+from app.services.filter import filter_data
 from app.services.logger import (
-    log_user_action,
     log_admin_action,
     log_error,
+    log_user_action,
 )
-import app.keyboards as kb
-from app.states import States as st
+from app.services.parser import parser
+from app.services.results_cache import save_result
+from app.services.visualization import generate_rating_histogram
 from app.states import ProfileStates as pst
-from config import MULTITASK, ADMIN_ID
+from app.states import States as st
+from config import ADMIN_ID, MULTITASK
 
 router = Router()
 
